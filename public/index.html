@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title>Quản lý khám sức khỏe toàn xã Lương Hòa</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="style.css">
+
+</head>
+
+<body>
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+
+    <div class="card shadow border-0 mb-4">
+
+        <div class="card-body">
+
+            <div class="row align-items-center">
+
+                <div class="col-lg-8">
+
+                    <h2 class="fw-bold text-primary mb-1">
+
+                        <i class="fa-solid fa-hospital-user"></i>
+
+                        QUẢN LÝ KHÁM SỨC KHỎE TOÀN XÃ
+
+                    </h2>
+
+                    <div class="text-secondary">
+
+                        Quản lý danh sách người dân và trạng thái khám
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-4 text-end">
+
+                    <div class="mb-2">
+
+                        <span id="userInfo"
+                            class="fw-bold text-primary"></span>
+
+                    </div>
+
+                    <button class="btn btn-warning d-none" id="btnLogs">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        Nhật ký
+                    </button>
+                    
+
+                    <button class="btn btn-primary d-none"
+                            id="btnUsers">
+
+                        <i class="fa-solid fa-users"></i>
+
+                        Quản lý tài khoản
+
+                    </button>
+
+                    <button class="btn btn-success"
+                            id="btnExport">
+
+                        <i class="fa-solid fa-file-excel"></i>
+
+                        Xuất Excel
+
+                    </button>
+
+                    <button class="btn btn-danger"
+                            id="btnLogout">
+
+                        <i class="fa-solid fa-right-from-bracket"></i>
+
+                        Đăng xuất
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- THỐNG KÊ -->
+
+    <div class="row row-cols-3 g-2 mb-4">
+
+        <div class="col">
+
+            <div class="card stat-card bg-primary text-white">
+
+                <div class="card-body">
+
+                    <h6>TỔNG HỒ SƠ</h6>
+
+                    <h2 id="tong">
+
+                        0
+
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col">
+
+            <div class="card stat-card bg-success text-white">
+
+                <div class="card-body">
+
+                    <h6>ĐÃ KHÁM</h6>
+
+                    <h2 id="dakham">
+
+                        0
+
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col">
+
+            <div class="card stat-card bg-danger text-white">
+
+                <div class="card-body">
+
+                    <h6>CHƯA KHÁM</h6>
+
+                    <h2 id="chuakham">
+
+                        0
+
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- IMPORT -->
+
+    <div class="card shadow mb-4 d-none" id="importCard">
+
+        <div class="card-body">
+
+            <h5 class="mb-3">
+
+                <i class="fa-solid fa-file-import"></i>
+
+                Import Excel
+
+            </h5>
+
+            <div class="row g-3">
+
+                <div class="col-md-7">
+
+                    <input type="file"
+                           id="excel"
+                           class="form-control"
+                           accept=".xlsx,.xls">
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <button class="btn btn-primary w-100"
+                            id="btnImport">
+
+                        <i class="fa-solid fa-upload"></i>
+
+                        Import
+
+                    </button>
+
+                </div>
+
+
+                <div class="col-md-2">
+
+                    <button class="btn btn-secondary w-100"
+                            id="btnReload">
+
+                        <i class="fa-solid fa-rotate"></i>
+
+                        Làm mới
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="progress mt-3 d-none"
+                 id="progressBox">
+
+                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                     id="progressBar"
+                     style="width:0%">
+
+                    0%
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- TÌM KIẾM -->
+
+    <div class="card shadow mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-9">
+
+                    <input
+
+                        type="text"
+
+                        class="form-control"
+
+                        id="txtSearch"
+
+                        placeholder="🔍 Nhập STT, họ tên hoặc địa chỉ..."
+
+                    >
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <button
+
+                        class="btn btn-primary w-100"
+
+                        id="btnSearch">
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        Tìm kiếm
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- TABLE -->
+
+    <div class="card shadow">
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-dark">
+
+                    <tr>
+
+                        <th width="70">
+
+                            STT
+
+                        </th>
+
+                        <th>
+
+                            Họ tên
+
+                        </th>
+
+                        <th width="120">
+
+                            Ngày sinh
+
+                        </th>
+
+                        <th width="90">
+
+                            Giới tính
+
+                        </th>
+
+                        <th>
+
+                            Địa chỉ
+
+                        </th>
+
+                        <th width="130">
+
+                            Trạng thái
+
+                        </th>
+
+                        <th width="140">
+
+                            Thao tác
+
+                        </th>
+
+                    </tr>
+
+                    </thead>
+
+                    <tbody id="tableBody">
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- PAGINATION -->
+
+    <div class="d-flex justify-content-between align-items-center mt-3">
+
+        <div id="pageInfo">
+
+            0 bản ghi
+
+        </div>
+
+        <nav>
+
+            <ul class="pagination mb-0"
+                id="pagination">
+
+            </ul>
+
+        </nav>
+
+    </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="app.js"></script>
+
+</body>
+
+</html>

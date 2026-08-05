@@ -1,0 +1,580 @@
+/*====================================
+    KHAM TOAN XA 2.0
+====================================*/
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+
+    background:#edf2f7;
+
+    font-family:
+    "Segoe UI",
+    Tahoma,
+    Geneva,
+    Verdana,
+    sans-serif;
+
+}
+
+/*==============================*/
+
+.container-fluid{
+
+    max-width:1500px;
+
+}
+
+/*==============================*/
+
+.card{
+
+    border:none;
+
+    border-radius:15px;
+
+    overflow:hidden;
+
+    transition:.25s;
+
+}
+
+.card:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+
+}
+
+/*==============================*/
+
+.stat-card{
+
+    border-radius:18px;
+
+    transition:.3s;
+
+}
+
+.stat-card:hover{
+
+    transform:scale(1.02);
+
+}
+
+.stat-card h6{
+
+    opacity:.9;
+
+    font-weight:600;
+
+    letter-spacing:1px;
+
+}
+
+.stat-card h2{
+
+    font-size:42px;
+
+    margin-top:12px;
+
+    font-weight:bold;
+
+}
+
+/*==============================*/
+
+.btn{
+
+    border-radius:10px;
+
+    font-weight:600;
+
+    transition:.2s;
+
+}
+
+.btn:hover{
+
+    transform:translateY(-1px);
+
+}
+
+/*==============================*/
+
+.form-control{
+
+    border-radius:10px;
+
+    height:48px;
+
+}
+
+.form-control:focus{
+
+    box-shadow:none;
+
+    border-color:#0d6efd;
+
+}
+
+/*==============================*/
+
+.progress{
+
+    height:28px;
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+}
+
+.progress-bar{
+
+    font-weight:bold;
+
+    font-size:14px;
+
+}
+
+/*==============================*/
+
+.table{
+
+    margin-bottom:0;
+
+}
+
+.table thead th{
+
+    vertical-align:middle;
+
+    white-space:nowrap;
+
+    font-size:15px;
+
+}
+
+.table tbody td{
+
+    vertical-align:middle;
+
+    font-size:15px;
+
+}
+
+.table tbody tr{
+
+    transition:.15s;
+
+}
+
+.table tbody tr:hover{
+
+    background:#f4f8ff;
+
+}
+
+/*==============================*/
+
+.badge{
+
+    font-size:13px;
+
+    padding:8px 14px;
+
+    border-radius:20px;
+
+}
+
+.badge-success{
+
+    background:#198754;
+
+    color:#fff;
+
+}
+
+.badge-danger{
+
+    background:#dc3545;
+
+    color:#fff;
+
+}
+
+/*==============================*/
+
+.table td button{
+
+    min-width:95px;
+
+}
+
+/*==============================*/
+
+.pagination{
+
+    margin:0;
+
+}
+
+.page-link{
+
+    border-radius:8px!important;
+
+    margin:0 2px;
+
+    color:#0d6efd;
+
+}
+
+.page-item.active .page-link{
+
+    background:#0d6efd;
+
+    border-color:#0d6efd;
+
+}
+
+/*==============================*/
+
+.loading{
+
+    padding:60px;
+
+    text-align:center;
+
+}
+
+.loading i{
+
+    font-size:60px;
+
+    color:#0d6efd;
+
+    animation:spin 1s linear infinite;
+
+}
+
+/*==============================*/
+
+.empty{
+
+    padding:70px;
+
+    text-align:center;
+
+    color:#777;
+
+}
+
+.empty i{
+
+    font-size:70px;
+
+    margin-bottom:20px;
+
+    color:#bbb;
+
+}
+
+/*==============================*/
+
+.toast-box{
+
+    position:fixed;
+
+    top:20px;
+
+    right:20px;
+
+    z-index:9999;
+
+}
+
+/*==============================*/
+
+::-webkit-scrollbar{
+
+    width:10px;
+
+    height:10px;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#c5c5c5;
+
+    border-radius:20px;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+    background:#999;
+
+}
+
+/*==============================*/
+
+.fade-in{
+
+    animation:fadeIn .25s;
+
+}
+
+@keyframes fadeIn{
+
+from{
+
+opacity:0;
+
+transform:translateY(10px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+/*==============================*/
+
+@keyframes spin{
+
+from{
+
+transform:rotate(0deg);
+
+}
+
+to{
+
+transform:rotate(360deg);
+
+}
+
+}
+
+/*==============================*/
+
+.text-name{
+
+    font-weight:700;
+
+    color:#0d6efd;
+
+}
+
+.text-address{
+
+    color:#555;
+
+    font-size:14px;
+
+}
+
+/*==============================*/
+
+.search-highlight{
+
+    background:yellow;
+
+    padding:1px 3px;
+
+}
+
+/*==============================*/
+
+@media(max-width:992px){
+
+.stat-card{
+
+margin-bottom:20px;
+
+}
+
+.table{
+
+font-size:14px;
+
+}
+
+.btn{
+
+width:100%;
+
+margin-top:8px;
+
+}
+
+#pageInfo{
+
+margin-bottom:10px;
+
+}
+
+}
+
+/*==============================*/
+
+@media(max-width:768px){
+
+.container-fluid{
+
+padding:10px;
+
+}
+
+.card-body{
+
+padding:15px;
+
+}
+
+h2{
+
+font-size:22px;
+
+}
+
+.stat-card h2{
+
+font-size:34px;
+
+}
+
+.table thead{
+
+display:none;
+
+}
+
+.table,
+.table tbody,
+.table tr,
+.table td{
+
+display:block;
+
+width:100%;
+
+}
+
+.table tr{
+
+margin-bottom:15px;
+
+border-bottom:2px solid #eee;
+
+padding-bottom:10px;
+
+}
+
+.table td{
+
+text-align:left!important;
+
+padding-left:45%;
+
+position:relative;
+
+}
+
+.table td::before{
+
+position:absolute;
+
+left:10px;
+
+font-weight:bold;
+
+color:#666;
+
+}
+
+.table td:nth-child(1)::before{
+
+content:"STT";
+
+}
+
+.table td:nth-child(2)::before{
+
+content:"Họ tên";
+
+}
+
+.table td:nth-child(3)::before{
+
+content:"Ngày sinh";
+
+}
+
+.table td:nth-child(4)::before{
+
+content:"Giới tính";
+
+}
+
+.table td:nth-child(5)::before{
+
+content:"Địa chỉ";
+
+}
+
+.table td:nth-child(6)::before{
+
+content:"Trạng thái";
+
+}
+
+.table td:nth-child(7)::before{
+
+content:"Thao tác";
+
+}
+
+}
+/* ===========================
+   Mobile
+=========================== */
+
+@media (max-width:768px){
+
+.stat-card{
+
+    padding:8px;
+
+}
+
+.stat-card h2{
+
+    font-size:22px;
+
+    margin:0;
+
+}
+
+.stat-card h6{
+
+    font-size:11px;
+
+    margin-bottom:2px;
+
+}
+
+}

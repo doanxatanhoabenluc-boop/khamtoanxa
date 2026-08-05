@@ -1,0 +1,17 @@
+{
+  "name": "khamtoanxa",
+  "version": "1.0.0",
+  "description": "Quản lý khám sức khỏe toàn xã",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "import": "node import.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "multer": "^2.2.0",
+    "xlsx": "^0.18.5"
+  }
+}
