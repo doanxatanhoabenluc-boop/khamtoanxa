@@ -5,23 +5,23 @@ const XLSX = require("xlsx");
 const fs = require("fs");
 const path = require("path");
 const { Pool } = require("pg");
-
 const dns = require("dns");
-dns.setDefaultResultOrder("ipv4first");
+require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 //===============================
-// KẾT NỐI DATABASE SUPABASE POSTGRES
+// KẾT NỐI DATABASE SUPABASE POSTGRES (TỰ ĐỘNG CHUYỂN SANG IPV4)
 //===============================
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || "postgresql://postgres:Tanhoa%401121996@db.dmthfatarymorleoxeez.supabase.co:5432/postgres",
-    ssl: {
-        rejectUnauthorized: false
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+    // Ép pg client phân giải tên miền ưu tiên IPv4 (Address Family 4)
+    lookup: (hostname, options, callback) => {
+        dns.lookup(hostname, { family: 4 }, callback);
     }
 });
-
 //===============================
 // CẤU HÌNH MIDDLEWARE & SESSION
 //===============================
