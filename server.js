@@ -6,6 +6,9 @@ const fs = require("fs");
 const path = require("path");
 const { Pool } = require("pg");
 
+const dns = require("dns");
+dns.setDefaultResultOrder("ipv4first");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
