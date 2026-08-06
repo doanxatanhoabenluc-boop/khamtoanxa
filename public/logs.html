@@ -2,83 +2,55 @@
 <html lang="vi">
 
 <head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
-<title>Nhật ký hoạt động</title>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
-
-<link rel="stylesheet" href="style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Nhật ký hoạt động</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+    <div class="container py-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3>
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        Nhật ký hoạt động
+                    </h3>
+                    <div>
+                        <!-- Nút Xóa tất cả dành riêng cho Admin -->
+                        <button class="btn btn-outline-danger me-2" id="btnClearAllLogs">
+                            <i class="fa-solid fa-trash-can"></i> Xóa tất cả
+                        </button>
+                        <button class="btn btn-secondary" id="btnBack">
+                            <i class="fa-solid fa-arrow-left"></i> Quay lại
+                        </button>
+                    </div>
+                </div>
 
-<div class="container py-4">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th width="60">STT</th>
+                                <th>Thời gian</th>
+                                <th>Người dùng</th>
+                                <th>Hành động</th>
+                                <th>Đối tượng</th>
+                                <th width="80" class="text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<div class="card shadow">
-
-<div class="card-body">
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-
-<h3>
-
-<i class="fa-solid fa-clock-rotate-left"></i>
-
-Nhật ký hoạt động
-
-</h3>
-
-<button class="btn btn-secondary" id="btnBack">
-
-<i class="fa-solid fa-arrow-left"></i>
-
-Quay lại
-
-</button>
-
-</div>
-
-<table class="table table-bordered table-hover">
-
-<thead class="table-dark">
-
-<tr>
-
-<th width="60">STT</th>
-
-<th>Thời gian</th>
-
-<th>Người dùng</th>
-
-<th>Hành động</th>
-
-<th>Đối tượng</th>
-
-</tr>
-
-</thead>
-
-<tbody id="tableBody">
-
-</tbody>
-
-</table>
-
-</div>
-
-</div>
-
-</div>
-
-<script src="logs.js"></script>
-
+    <script src="logs.js"></script>
 </body>
 
 </html>

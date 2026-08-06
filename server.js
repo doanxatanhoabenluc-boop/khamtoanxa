@@ -61,7 +61,7 @@ function requireAdminOrLanhDao(req, res, next) {
     }
     const role = req.session.user.role;
     if (role !== "admin" && role !== "lanh_dao") {
-        return res.status(403).json({ success: false, message: "Chỉ Ban lãnh đạo hoặc Admin mới có quyền xem thông tin này" });
+        return res.status(403).json({ success: false, message: "Chỉ lãnh đạo hoặc Admin mới có quyền thực hiện chức năng này" });
     }
     next();
 }
@@ -674,7 +674,7 @@ app.delete("/api/nguoi/:id", requireLeaderOrAdmin, async (req, res) => {
 //===============================
 // API THỐNG KÊ & LOGS (ADMIN & LÃNH ĐẠO VÀO ĐƯỢC)
 //===============================
-app.get("/api/stats", requireAdminOrLanhDao, async (req, res) => {
+app.get("/api/stats", requireLogin, async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT 
@@ -695,7 +695,7 @@ app.get("/api/stats", requireAdminOrLanhDao, async (req, res) => {
     }
 });
 
-app.get("/api/stats-by-ap", requireAdminOrLanhDao, async (req, res) => {
+app.get("/api/stats-by-ap", requireLogin, async (req, res) => {
     try {
         const result = await pool.query(`
             WITH ap_extracted AS (
@@ -751,7 +751,7 @@ app.get("/api/stats-by-ap", requireAdminOrLanhDao, async (req, res) => {
     }
 });
 
-app.get("/api/danh-sach-chi-tiet-ap", requireAdminOrLanhDao, async (req, res) => {
+app.get("/api/danh-sach-chi-tiet-ap", requireLogin, async (req, res) => {
     try {
         const { ap, status } = req.query;
 
@@ -964,7 +964,26 @@ app.get("/api/export-da-kham", requireAdminOrLanhDao, async (req, res) => {
         res.status(500).json({ ok: false, message: err.message });
     }
 });
+// 1. API Xóa 1 bản ghi nhật ký (Chỉ Admin)
+app.delete("/api/logs/:id", requireAdmin, async (req, res) => {
+    const { id } = req.params;
+    try {
+        await pool.query("DELETE FROM logs WHERE id = $1", [id]);
+        res.json({ success: true, message: "Đã xóa nhật ký thành công!" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
 
+// 2. API Xóa TOÀN BỘ nhật ký (Chỉ Admin)
+app.delete("/api/logs", requireAdmin, async (req, res) => {
+    try {
+        await pool.query("DELETE FROM logs");
+        res.json({ success: true, message: "Đã xóa toàn bộ nhật ký!" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
 //===============================
 // ROUTE TRANG WEB & HANDLER LỖI
 //===============================
