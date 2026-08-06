@@ -5,7 +5,7 @@ const XLSX = require("xlsx");
 const fs = require("fs");
 const path = require("path");
 const { Pool } = require("pg");
-require("dotenv").config();
+//require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
