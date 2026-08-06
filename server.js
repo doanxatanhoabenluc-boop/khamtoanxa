@@ -35,7 +35,7 @@ if (!fs.existsSync("uploads")) {
 
 const upload = multer({ dest: "uploads/" });
 
-// Middleware kiểm tra đăng nhập
+// 1. Middleware kiểm tra đăng nhập chung
 function requireLogin(req, res, next) {
     if (!req.session || !req.session.user) {
         return res.status(401).json({ success: false, message: "Chưa đăng nhập" });
@@ -43,15 +43,36 @@ function requireLogin(req, res, next) {
     next();
 }
 
-// Middleware chỉ dành riêng cho Admin
+// 2. Middleware chỉ dành riêng cho Admin tối cao (Quản lý user, Import Excel, Xem Logs)
 function requireAdmin(req, res, next) {
     if (!req.session || !req.session.user) {
         return res.status(401).json({ success: false, message: "Chưa đăng nhập" });
     }
     if (req.session.user.role !== "admin") {
-        return res.status(403).json({ success: false, message: "Không có quyền thực hiện chức năng này" });
+        return res.status(403).json({ success: false, message: "Không có quyền thực hiện chức năng này. Chỉ Admin mới được phép!" });
     }
     next();
+}
+
+// 3. Middleware dành cho Cả Admin VÀ Lãnh đạo (Xem thống kê, báo cáo, chi tiết Ấp, Xuất Excel)
+function requireAdminOrLanhDao(req, res, next) {
+    if (!req.session || !req.session.user) {
+        return res.status(401).json({ success: false, message: "Chưa đăng nhập" });
+    }
+    const role = req.session.user.role;
+    if (role !== "admin" && role !== "lanh_dao") {
+        return res.status(403).json({ success: false, message: "Chỉ Ban lãnh đạo hoặc Admin mới có quyền xem thông tin này" });
+    }
+    next();
+}
+
+// Middleware cho phép Admin hoặc Lãnh đạo
+function requireLeaderOrAdmin(req, res, next) {
+    const user = req.session?.user;
+    if (user && (user.role === 'admin' || user.role === 'lanh_dao')) {
+        return next();
+    }
+    return res.status(403).json({ success: false, message: "Chỉ Admin hoặc Lãnh đạo mới có quyền thực hiện thao tác này!" });
 }
 
 //===============================
@@ -186,7 +207,7 @@ app.post("/api/login", async (req, res) => {
         };
 
         await addLog(req.session.user, "Đăng nhập", null, "");
-        res.json({ success: true });
+        res.json({ success: true, role: user.role });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -206,7 +227,7 @@ app.post("/api/logout", (req, res) => {
 });
 
 //===============================
-// API QUẢN LÝ TÀI KHOẢN (USERS)
+// API QUẢN LÝ TÀI KHOẢN (CHỈ ADMIN)
 //===============================
 app.post("/api/users", requireAdmin, async (req, res) => {
     try {
@@ -220,7 +241,11 @@ app.post("/api/users", requireAdmin, async (req, res) => {
             return res.json({ success: false, message: "Tên đăng nhập đã tồn tại" });
         }
 
-        const newRole = role === "admin" ? "admin" : "member";
+        // Hỗ trợ cả 3 role: admin, lanh_dao, member
+        let newRole = "member";
+        if (role === "admin") newRole = "admin";
+        else if (role === "lanh_dao") newRole = "lanh_dao";
+
         await pool.query(`
             INSERT INTO users (username, password, fullname, role, created_at)
             VALUES ($1, $2, $3, $4, $5)
@@ -262,6 +287,41 @@ app.put("/api/users/:id/password", requireAdmin, async (req, res) => {
         }
 
         res.json({ success: true, message: "Đã đổi mật khẩu" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+// API Cập nhật thông tin User (Họ tên & Quyền)
+// API Cập nhật Họ tên và Quyền người dùng
+app.put("/api/users/:id/info", requireAdmin, async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        const { fullname, role } = req.body;
+
+        if (!fullname || !role) {
+            return res.json({ success: false, message: "Thiếu thông tin Họ tên hoặc Quyền" });
+        }
+
+        const userRes = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+        const user = userRes.rows[0];
+
+        if (!user) {
+            return res.json({ success: false, message: "Tài khoản không tồn tại" });
+        }
+
+        // Chặn đổi quyền của Admin mặc định
+        if (user.username === "admin" && role !== "admin") {
+            return res.json({ success: false, message: "Không thể giáng quyền tài khoản Admin tối cao" });
+        }
+
+        await pool.query(
+            "UPDATE users SET fullname = $1, role = $2 WHERE id = $3",
+            [fullname, role, id]
+        );
+
+        await addLog(req.session.user, "Sửa thông tin tài khoản", id, `${fullname} (${role})`);
+
+        res.json({ success: true, message: "Cập nhật thành công" });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -321,9 +381,9 @@ app.delete("/api/users/:id", requireAdmin, async (req, res) => {
 });
 
 //===============================
-// API IMPORT EXCEL (BULK INSERT)
+// API IMPORT EXCEL (CHỈ ADMIN)
 //===============================
-app.post("/api/import", upload.single("excel"), async (req, res) => {
+app.post("/api/import", requireAdmin, upload.single("excel"), async (req, res) => {
     const client = await pool.connect();
     try {
         if (!req.file) {
@@ -548,7 +608,6 @@ app.post("/api/nguoi", requireLogin, async (req, res) => {
     try {
         const isKham = (dakham === 1 || dakham === "1" || dakham === true) ? 1 : 0;
         
-        // Lưu kèm theo ID và Tên người tạo từ Session
         const result = await pool.query(
             `INSERT INTO nguoi (stt, hoten, hoten_khongdau, ngaysinh, gioitinh, diachi, diachi_khongdau, dakham, checked_by, checked_by_name, checked_at) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
@@ -601,7 +660,8 @@ app.put("/api/nguoi/:id", requireLogin, async (req, res) => {
     }
 });
 
-app.delete("/api/nguoi/:id", requireAdmin, async (req, res) => {
+// Áp dụng middleware mới vào Route
+app.delete("/api/nguoi/:id", requireLeaderOrAdmin, async (req, res) => {
     const { id } = req.params;
     try {
         await pool.query("DELETE FROM nguoi WHERE id = $1", [id]);
@@ -612,27 +672,30 @@ app.delete("/api/nguoi/:id", requireAdmin, async (req, res) => {
 });
 
 //===============================
-// API THỐNG KÊ & LOGS
+// API THỐNG KÊ & LOGS (ADMIN & LÃNH ĐẠO VÀO ĐƯỢC)
 //===============================
-app.get("/api/stats", async (req, res) => {
+app.get("/api/stats", requireAdminOrLanhDao, async (req, res) => {
     try {
-        const tongRes = await pool.query("SELECT COUNT(*) c FROM nguoi");
-        const dakhamRes = await pool.query("SELECT COUNT(*) c FROM nguoi WHERE dakham = 1");
+        const result = await pool.query(`
+            SELECT 
+                COUNT(*) AS tong,
+                COUNT(CASE WHEN dakham = 1 THEN 1 END) AS dakham,
+                COUNT(CASE WHEN dakham = 0 OR dakham IS NULL THEN 1 END) AS chuakham
+            FROM nguoi
+        `);
 
-        const tong = parseInt(tongRes.rows[0].c);
-        const dakham = parseInt(dakhamRes.rows[0].c);
-
+        const stats = result.rows[0];
         res.json({
-            tong,
-            dakham,
-            chuakham: tong - dakham
+            tong: parseInt(stats.tong || 0),
+            dakham: parseInt(stats.dakham || 0),
+            chuakham: parseInt(stats.chuakham || 0)
         });
     } catch (err) {
         res.status(500).json({ ok: false, message: err.message });
     }
 });
 
-app.get("/api/stats-by-ap", requireLogin, async (req, res) => {
+app.get("/api/stats-by-ap", requireAdminOrLanhDao, async (req, res) => {
     try {
         const result = await pool.query(`
             WITH ap_extracted AS (
@@ -656,11 +719,12 @@ app.get("/api/stats-by-ap", requireLogin, async (req, res) => {
                         ELSE 'Khác / Chưa rõ Ấp'
                     END AS ten_ap
                 FROM nguoi
-                WHERE dakham = 0
             )
             SELECT 
                 ten_ap AS ap, 
-                COUNT(*) AS chuakham_count
+                COUNT(*) AS tong_so,
+                COUNT(CASE WHEN dakham = 1 THEN 1 END) AS dakham_count,
+                COUNT(CASE WHEN dakham = 0 OR dakham IS NULL THEN 1 END) AS chuakham_count
             FROM ap_extracted
             GROUP BY ten_ap
             ORDER BY 
@@ -687,46 +751,57 @@ app.get("/api/stats-by-ap", requireLogin, async (req, res) => {
     }
 });
 
-app.get("/api/danh-sach-chi-tiet-ap", requireLogin, async (req, res) => {
+app.get("/api/danh-sach-chi-tiet-ap", requireAdminOrLanhDao, async (req, res) => {
     try {
-        const ap = req.query.ap ? String(req.query.ap).trim() : "";
-        if (!ap) return res.json({ ok: false, message: "Thiếu tên Ấp" });
+        const { ap, status } = req.query;
 
-        let whereClause = ` WHERE dakham = 0 `;
-        let params = [];
-
-        if (ap === 'Ấp 6A') {
-            whereClause += ` AND (UPPER(diachi) LIKE '%ẤP 6A%' OR UPPER(diachi) LIKE '%AP 6A%') `;
-        } else if (ap === 'Ấp 6B') {
-            whereClause += ` AND (UPPER(diachi) LIKE '%ẤP 6B%' OR UPPER(diachi) LIKE '%AP 6B%') `;
-        } else if (ap === 'Ấp 7A') {
-            whereClause += ` AND (UPPER(diachi) LIKE '%ẤP 7A%' OR UPPER(diachi) LIKE '%AP 7A%') `;
-        } else if (ap === 'Ấp 6') {
-            whereClause += ` AND (UPPER(diachi) LIKE '%ẤP 6%' OR UPPER(diachi) LIKE '%AP 6%') AND UPPER(diachi) NOT LIKE '%6A%' AND UPPER(diachi) NOT LIKE '%6B%' `;
-        } else if (ap === 'Ấp 7') {
-            whereClause += ` AND (UPPER(diachi) LIKE '%ẤP 7%' OR UPPER(diachi) LIKE '%AP 7%') AND UPPER(diachi) NOT LIKE '%7A%' `;
-        } else if (ap === 'Ấp 1') {
-            whereClause += ` AND (UPPER(diachi) LIKE '%ẤP 1%' OR UPPER(diachi) LIKE '%AP 1%') AND UPPER(diachi) NOT LIKE '%10%' `;
-        } else {
-            whereClause += ` AND (UPPER(diachi) LIKE $1 OR UPPER(diachi) LIKE $2) `;
-            const apNoAccent = removeVietnamese(ap).toUpperCase();
-            params.push(`%${ap.toUpperCase()}%`, `%${apNoAccent}%`);
+        let statusCondition = "";
+        if (status === "0") {
+            statusCondition = "AND (dakham = 0 OR dakham IS NULL)";
+        } else if (status === "1") {
+            statusCondition = "AND dakham = 1";
         }
 
-        const queryText = `
-            SELECT stt, hoten, ngaysinh, gioitinh, diachi 
-            FROM nguoi 
-            ${whereClause} 
-            ORDER BY stt ASC
+        let apCondition = "";
+        if (ap === "Khác / Chưa rõ Ấp") {
+            apCondition = `
+                AND UPPER(diachi) NOT LIKE '%ẤP 1%' AND UPPER(diachi) NOT LIKE '%AP 1%'
+                AND UPPER(diachi) NOT LIKE '%ẤP 2%' AND UPPER(diachi) NOT LIKE '%AP 2%'
+                AND UPPER(diachi) NOT LIKE '%ẤP 3%' AND UPPER(diachi) NOT LIKE '%AP 3%'
+                AND UPPER(diachi) NOT LIKE '%ẤP 4%' AND UPPER(diachi) NOT LIKE '%AP 4%'
+                AND UPPER(diachi) NOT LIKE '%ẤP 5%' AND UPPER(diachi) NOT LIKE '%AP 5%'
+                AND UPPER(diachi) NOT LIKE '%ẤP 6%' AND UPPER(diachi) NOT LIKE '%AP 6%'
+                AND UPPER(diachi) NOT LIKE '%ẤP 7%' AND UPPER(diachi) NOT LIKE '%AP 7%'
+                AND UPPER(diachi) NOT LIKE '%ẤP 8%' AND UPPER(diachi) NOT LIKE '%AP 8%'
+                AND UPPER(diachi) NOT LIKE '%ẤP 9%' AND UPPER(diachi) NOT LIKE '%AP 9%'
+                AND UPPER(diachi) NOT LIKE '%ẤP 10%' AND UPPER(diachi) NOT LIKE '%AP 10%'
+            `;
+        } else if (ap) {
+            apCondition = `AND (UPPER(diachi) LIKE UPPER($1) OR UPPER(diachi) LIKE UPPER($2))`;
+        }
+
+        let queryParams = [];
+        if (ap && ap !== "Khác / Chưa rõ Ấp") {
+            const cleanAp = ap.replace('Ấp ', '');
+            queryParams = [`%ẤP ${cleanAp}%`, `%AP ${cleanAp}%`];
+        }
+
+        const sql = `
+            SELECT id, hoten, ngaysinh, gioitinh, diachi, dakham
+            FROM nguoi
+            WHERE 1=1 ${statusCondition} ${apCondition}
+            ORDER BY hoten ASC
         `;
 
-        const result = await pool.query(queryText, params);
+        const result = await pool.query(sql, queryParams);
         res.json({ ok: true, data: result.rows });
+
     } catch (err) {
         res.status(500).json({ ok: false, message: err.message });
     }
 });
 
+// Nhật ký hoạt động (Chỉ Admin)
 app.get("/api/logs", requireAdmin, async (req, res) => {
     try {
         const result = await pool.query(`
@@ -740,9 +815,9 @@ app.get("/api/logs", requireAdmin, async (req, res) => {
 });
 
 //===============================
-// API EXPORT EXCEL
+// API EXPORT EXCEL (ADMIN & LÃNH ĐẠO VÀO ĐƯỢC)
 //===============================
-app.get("/api/export", requireAdmin, async (req, res) => {
+app.get("/api/export", requireAdminOrLanhDao, async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT
@@ -765,14 +840,17 @@ app.get("/api/export", requireAdmin, async (req, res) => {
         const file = path.join(__dirname, "danhsach_export.xlsx");
         XLSX.writeFile(wb, file);
 
-        res.download(file);
+        res.download(file, (err) => {
+            if (fs.existsSync(file)) fs.unlinkSync(file);
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ ok: false, message: err.message });
     }
 });
 
-app.get("/api/export-chua-kham", requireLogin, async (req, res) => {
+// Xuất danh sách CHƯA KHÁM theo Ấp
+app.get("/api/export-chua-kham", requireAdminOrLanhDao, async (req, res) => {
     try {
         const ap = req.query.ap ? String(req.query.ap).trim() : "";
 
@@ -789,7 +867,7 @@ app.get("/api/export-chua-kham", requireLogin, async (req, res) => {
         `;
         let queryParams = [];
 
-        if (ap && ap !== "ALL") {
+        if (ap && ap !== "ALL" && ap !== "Khác / Chưa rõ Ấp") {
             queryText += ` AND (
                 UPPER(diachi) LIKE $1 
                 OR UPPER(diachi) LIKE $2
@@ -828,10 +906,69 @@ app.get("/api/export-chua-kham", requireLogin, async (req, res) => {
     }
 });
 
+// Xuất danh sách ĐÃ KHÁM theo Ấp
+app.get("/api/export-da-kham", requireAdminOrLanhDao, async (req, res) => {
+    try {
+        const ap = req.query.ap ? String(req.query.ap).trim() : "";
+
+        let queryText = `
+            SELECT 
+                stt AS "STT",
+                hoten AS "Họ và tên",
+                ngaysinh AS "Ngày sinh",
+                gioitinh AS "Giới tính",
+                diachi AS "Địa chỉ chi tiết",
+                'Đã khám' AS "Trạng thái",
+                checked_by_name AS "Người đánh dấu",
+                checked_at AS "Thời gian đánh dấu"
+            FROM nguoi
+            WHERE dakham = 1
+        `;
+        let queryParams = [];
+
+        if (ap && ap !== "ALL" && ap !== "Khác / Chưa rõ Ấp") {
+            queryText += ` AND (
+                UPPER(diachi) LIKE $1 
+                OR UPPER(diachi) LIKE $2
+            )`;
+            
+            if (ap === 'Ấp 6') {
+                queryText += ` AND UPPER(diachi) NOT LIKE '%6A%' AND UPPER(diachi) NOT LIKE '%6B%'`;
+            } else if (ap === 'Ấp 7') {
+                queryText += ` AND UPPER(diachi) NOT LIKE '%7A%'`;
+            } else if (ap === 'Ấp 1') {
+                queryText += ` AND UPPER(diachi) NOT LIKE '%10%'`;
+            }
+
+            const apNoAccent = removeVietnamese(ap).toUpperCase();
+            queryParams.push(`%${ap.toUpperCase()}%`, `%${apNoAccent}%`);
+        }
+
+        queryText += ` ORDER BY stt`;
+
+        const result = await pool.query(queryText, queryParams);
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(result.rows);
+        XLSX.utils.book_append_sheet(wb, ws, "DaKham");
+
+        const fileName = ap && ap !== "ALL" ? `DaKham_${ap.replace(/\s+/g, '_')}.xlsx` : `DanhSach_DaKham_ToanXa.xlsx`;
+        const filePath = path.join(__dirname, fileName);
+
+        XLSX.writeFile(wb, filePath);
+        res.download(filePath, (err) => {
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ ok: false, message: err.message });
+    }
+});
+
 //===============================
 // ROUTE TRANG WEB & HANDLER LỖI
 //===============================
-app.get("/thongke", requireLogin, (req, res) => {
+app.get("/thongke", requireAdminOrLanhDao, (req, res) => {
     res.sendFile(path.join(__dirname, "public", "thongke.html"));
 });
 

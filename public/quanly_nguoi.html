@@ -171,7 +171,12 @@
             tbody.innerHTML = list.map(item => {
                 // KIỂM TRA QUYỀN SỬA / XÓA:
                 // Được sửa/xóa nếu: Là Admin HOẶC ID người tạo (checked_by) khớp với ID tài khoản đang đăng nhập (currentUser.id)
-                const isOwner = currentUser && (currentUser.role === 'admin' || Number(item.checked_by) === Number(currentUser.id));
+                // Cho phép Admin HOẶC Lãnh đạo HOẶC chính người tạo dòng đó được sửa/xóa
+                    const isOwner = currentUser && (
+                        currentUser.role === 'admin' || 
+                        currentUser.role === 'lanh_dao' || 
+                        Number(item.checked_by) === Number(currentUser.id)
+                    );
 
                 let actionBtns = '';
                 if (isOwner) {

@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thống kê người chưa khám theo Ấp</title>
+    <title>Thống kê khám sức khỏe theo Ấp</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .container { max-width: 1100px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e9ecef; padding-bottom: 15px; margin-bottom: 20px; }
         .header h2 { margin: 0; color: #0d6efd; font-size: 22px; }
         .btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: 0.2s; }
         .btn-back { background-color: #6c757d; color: white; }
         .btn-back:hover { background-color: #5a6268; }
-        .btn-view { background-color: #0d6efd; color: white; padding: 5px 12px; font-size: 13px; }
-        .btn-view:hover { background-color: #0b5ed7; }
+        .btn-view-danger { background-color: #dc3545; color: white; padding: 5px 10px; font-size: 12px; }
+        .btn-view-danger:hover { background-color: #bb2d3b; }
+        .btn-view-success { background-color: #198754; color: white; padding: 5px 10px; font-size: 12px; }
+        .btn-view-success:hover { background-color: #157347; }
         .btn-excel { background-color: #198754; color: white; }
         .btn-excel:hover { background-color: #157347; }
         .btn-close { background-color: #dc3545; color: white; }
@@ -23,12 +25,16 @@
         th, td { border: 1px solid #dee2e6; padding: 12px; text-align: left; }
         th { background-color: #f8f9fa; color: #495057; font-weight: 600; }
         tbody tr { transition: 0.15s; }
-        tbody tr:hover { background-color: #f1f8ff; cursor: pointer; }
+        tbody tr:hover { background-color: #f1f8ff; }
         .text-center { text-align: center; }
-        .badge-danger { background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 12px; font-weight: bold; font-size: 13px; }
+        
+        .badge-danger { background-color: #dc3545; color: white; padding: 6px 12px; border-radius: 12px; font-weight: bold; font-size: 13px; cursor: pointer; display: inline-block; transition: 0.2s; }
+        .badge-danger:hover { background-color: #b02a37; transform: scale(1.05); }
+        .badge-success { background-color: #198754; color: white; padding: 6px 12px; border-radius: 12px; font-weight: bold; font-size: 13px; cursor: pointer; display: inline-block; transition: 0.2s; }
+        .badge-success:hover { background-color: #146c43; transform: scale(1.05); }
         .note { color: #6c757d; font-size: 13px; margin-bottom: 15px; font-style: italic; }
 
-        /* CSS MODAL POPUP CHUẨN ĐẸP */
+        /* CSS MODAL POPUP */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: #fff; width: 90%; max-width: 850px; border-radius: 8px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.3); animation: fadeIn 0.2s ease-out; }
         .modal-header { background: #0d6efd; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -42,23 +48,24 @@
 
 <div class="container">
     <div class="header">
-        <h2>📊 Thống kê Chưa Khám Theo Ấp</h2>
+        <h2>📊 Thống Kê Khám Sức Khỏe Theo Ấp</h2>
         <a href="/" class="btn btn-back">⬅ Quay lại Trang chủ</a>
     </div>
 
-    <div class="note">* Bấm trực tiếp vào dòng của Ấp để xem danh sách chi tiết từng người.</div>
+    <div class="note">* Bấm vào số lượng <span style="color:#198754; font-weight:bold;">"Đã khám"</span> hoặc <span style="color:#dc3545; font-weight:bold;">"Chưa khám"</span> để xem danh sách chi tiết.</div>
 
     <table>
         <thead>
             <tr>
-                <th width="8%" class="text-center">STT</th>
+                <th width="7%" class="text-center">STT</th>
                 <th>Tên Ấp</th>
-                <th width="25%" class="text-center">Số người chưa khám</th>
-                <th width="18%" class="text-center">Thao tác</th>
+                <th width="20%" class="text-center">Đã khám</th>
+                <th width="20%" class="text-center">Chưa khám</th>
+                <th width="25%" class="text-center">Thao tác</th>
             </tr>
         </thead>
         <tbody id="tbodyAp">
-            <tr><td colspan="4" class="text-center">Đang tải dữ liệu...</td></tr>
+            <tr><td colspan="5" class="text-center">Đang tải dữ liệu...</td></tr>
         </tbody>
     </table>
 </div>
@@ -66,7 +73,7 @@
 <!-- MODAL POPUP HIỂN THỊ DANH SÁCH TỪNG NGƯỜI -->
 <div class="modal-overlay" id="modalChiTiet">
     <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header" id="modalHeader">
             <h3 id="modalTitle">Danh sách chi tiết</h3>
             <button class="btn btn-close" onclick="closeModal()" style="padding: 3px 8px;">✕</button>
         </div>
@@ -87,9 +94,9 @@
             </table>
         </div>
         <div class="modal-footer">
-            <span id="txtTongNguoi" style="font-weight: bold; color: #dc3545;"></span>
+            <span id="txtTongNguoi" style="font-weight: bold;"></span>
             <div>
-                <button class="btn btn-excel" onclick="downloadExcelCurrentAp()">📥 Tải File Excel Ấp Này</button>
+                <button class="btn btn-excel" onclick="downloadExcelCurrentAp()">📥 Tải File Excel</button>
                 <button class="btn btn-back" onclick="closeModal()">Đóng</button>
             </div>
         </div>
@@ -98,27 +105,41 @@
 
 <script>
     let currentSelectedAp = "";
+    let currentStatus = "0"; // "0": Chưa khám, "1": Đã khám
 
     // Nạp bảng danh sách Ấp
     async function loadStatsByAp() {
         try {
             const res = await fetch("/api/stats-by-ap");
             const json = await res.json();
-            if (!json.ok) return alert("Lỗi: " + json.message);
+            if (!json.ok) return alert("Lỗi: " + (json.message || "Không tải được thống kê"));
 
             const tbody = document.getElementById("tbodyAp");
             tbody.innerHTML = "";
 
             json.data.forEach((row, index) => {
+                const tenAp = row.ap || "Khác / Chưa rõ Ấp";
                 const tr = document.createElement("tr");
-                tr.onclick = () => xemChiTietAp(row.ap);
+
                 tr.innerHTML = `
                     <td class="text-center">${index + 1}</td>
-                    <td><b>${row.ap}</b></td>
-                    <td class="text-center"><span class="badge-danger">${row.chuakham_count} người</span></td>
+                    <td><b>${escapeHtml(tenAp)}</b></td>
                     <td class="text-center">
-                        <button class="btn btn-view" onclick="event.stopPropagation(); xemChiTietAp('${row.ap}')">
-                            👁️ Xem danh sách
+                        <span class="badge-success" title="Bấm để xem danh sách đã khám" onclick="xemChiTietAp('${escapeHtml(tenAp)}', '1')">
+                            ${row.dakham_count ?? 0} người
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge-danger" title="Bấm để xem danh sách chưa khám" onclick="xemChiTietAp('${escapeHtml(tenAp)}', '0')">
+                            ${row.chuakham_count ?? 0} người
+                        </span>
+                    </td>
+                    <td class="text-center" style="display:flex; gap:5px; justify-content:center;">
+                        <button class="btn btn-view-success" onclick="xemChiTietAp('${escapeHtml(tenAp)}', '1')">
+                            👁️ Đã khám
+                        </button>
+                        <button class="btn btn-view-danger" onclick="xemChiTietAp('${escapeHtml(tenAp)}', '0')">
+                            👁️ Chưa khám
                         </button>
                     </td>
                 `;
@@ -126,46 +147,68 @@
             });
         } catch (err) {
             console.error(err);
+            document.getElementById("tbodyAp").innerHTML = '<tr><td colspan="5" class="text-center" style="color:red;">Lỗi kết nối khi tải danh sách Ấp!</td></tr>';
         }
     }
 
-    // Mở Popup và Nạp dữ liệu chi tiết từng người
-    async function xemChiTietAp(tenAp) {
-        currentSelectedAp = tenAp;
-        document.getElementById("modalTitle").innerText = `DANH SÁCH CHƯA KHÁM - ${tenAp.toUpperCase()}`;
+    // Mở Popup và Nạp dữ liệu chi tiết (status = '1': Đã khám, status = '0': Chưa khám)
+    async function xemChiTietAp(tenAp, status = "0") {
+        currentSelectedAp = tenAp || "Khác / Chưa rõ Ấp";
+        currentStatus = String(status);
+        
+        const modalHeader = document.getElementById("modalHeader");
+        const txtTong = document.getElementById("txtTongNguoi");
+        const isDaKham = currentStatus === "1";
+
+        // Đổi màu header theo trạng thái (Xanh = Đã khám, Đỏ/Xanh dương = Chưa khám)
+        if (isDaKham) {
+            modalHeader.style.backgroundColor = "#198754";
+            txtTong.style.color = "#198754";
+            document.getElementById("modalTitle").innerText = `DANH SÁCH ĐÃ KHÁM - ${currentSelectedAp.toUpperCase()}`;
+        } else {
+            modalHeader.style.backgroundColor = "#0d6efd";
+            txtTong.style.color = "#dc3545";
+            document.getElementById("modalTitle").innerText = `DANH SÁCH CHƯA KHÁM - ${currentSelectedAp.toUpperCase()}`;
+        }
+
         document.getElementById("tbodyNguoi").innerHTML = '<tr><td colspan="5" class="text-center">⏳ Đang tải dữ liệu chi tiết...</td></tr>';
-        document.getElementById("txtTongNguoi").innerText = "";
+        txtTong.innerText = "";
         
         // Hiện Modal Popup
         document.getElementById("modalChiTiet").style.display = "flex";
 
         try {
-            const res = await fetch(`/api/danh-sach-chi-tiet-ap?ap=${encodeURIComponent(tenAp)}`);
+            // Truyền thêm param status vào API
+            const url = `/api/danh-sach-chi-tiet-ap?ap=${encodeURIComponent(currentSelectedAp)}&status=${currentStatus}`;
+            const res = await fetch(url);
             const json = await res.json();
 
             const tbody = document.getElementById("tbodyNguoi");
             tbody.innerHTML = "";
 
             if (!json.ok || !json.data || json.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Không tìm thấy dữ liệu.</td></tr>';
+                const labelText = isDaKham ? "đã khám" : "chưa khám";
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center">Không tìm thấy dữ liệu ${labelText} cho ấp này.</td></tr>`;
                 return;
             }
 
-            document.getElementById("txtTongNguoi").innerText = `Tổng số: ${json.data.length} người chưa khám`;
+            const labelText = isDaKham ? "đã khám" : "chưa khám";
+            txtTong.innerText = `Tổng số: ${json.data.length} người ${labelText}`;
 
             json.data.forEach((item, idx) => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
                     <td class="text-center">${item.stt || (idx + 1)}</td>
-                    <td><b>${item.hoten || ''}</b></td>
-                    <td class="text-center">${item.ngaysinh || ''}</td>
-                    <td class="text-center">${item.gioitinh || ''}</td>
-                    <td>${item.diachi || ''}</td>
+                    <td><b>${escapeHtml(item.hoten || '')}</b></td>
+                    <td class="text-center">${escapeHtml(item.ngaysinh || '')}</td>
+                    <td class="text-center">${escapeHtml(item.gioitinh || '')}</td>
+                    <td>${escapeHtml(item.diachi || '')}</td>
                 `;
                 tbody.appendChild(tr);
             });
         } catch (err) {
-            document.getElementById("tbodyNguoi").innerHTML = '<tr><td colspan="5" class="text-center" style="color:red;">Lỗi kết nối máy chủ!</td></tr>';
+            console.error(err);
+            document.getElementById("tbodyNguoi").innerHTML = '<tr><td colspan="5" class="text-center" style="color:red;">Lỗi tải dữ liệu chi tiết!</td></tr>';
         }
     }
 
@@ -175,10 +218,24 @@
 
     function downloadExcelCurrentAp() {
         if (currentSelectedAp) {
-            window.location.href = `/api/export-chua-kham?ap=${encodeURIComponent(currentSelectedAp)}`;
+            // Tải file Excel tương ứng với Đã khám hoặc Chưa khám
+            const route = currentStatus === "1" ? "/api/export-da-kham" : "/api/export-chua-kham";
+            window.location.href = `${route}?ap=${encodeURIComponent(currentSelectedAp)}`;
         }
     }
 
+    // Hàm chống lỗi HTML Injection khi hiển thị chữ
+    function escapeHtml(text) {
+        if (!text) return "";
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Chạy nạp dữ liệu khi tải trang
     loadStatsByAp();
 </script>
 
