@@ -1,580 +1,412 @@
 /*====================================
-    KHAM TOAN XA 2.0
+    KHAM TOAN XA 2.0 - COMPLETE CSS
 ====================================*/
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+/* 1. RESET & BASE STYLES */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-body{
-
-    background:#edf2f7;
-
-    font-family:
-    "Segoe UI",
-    Tahoma,
-    Geneva,
-    Verdana,
-    sans-serif;
-
-}
-
-/*==============================*/
-
-.container-fluid{
-
-    max-width:1500px;
-
-}
-
-/*==============================*/
-
-.card{
-
-    border:none;
-
-    border-radius:15px;
-
-    overflow:hidden;
-
-    transition:.25s;
-
-}
-
-.card:hover{
-
-    transform:translateY(-2px);
-
-    box-shadow:0 10px 25px rgba(0,0,0,.08);
-
-}
-
-/*==============================*/
-
-.stat-card{
-
-    border-radius:18px;
-
-    transition:.3s;
-
-}
-
-.stat-card:hover{
-
-    transform:scale(1.02);
-
-}
-
-.stat-card h6{
-
-    opacity:.9;
-
-    font-weight:600;
-
-    letter-spacing:1px;
-
-}
-
-.stat-card h2{
-
-    font-size:42px;
-
-    margin-top:12px;
-
-    font-weight:bold;
-
-}
-
-/*==============================*/
-
-.btn{
-
-    border-radius:10px;
-
-    font-weight:600;
-
-    transition:.2s;
-
-}
-
-.btn:hover{
-
-    transform:translateY(-1px);
-
-}
-
-/*==============================*/
-
-.form-control{
-
-    border-radius:10px;
-
-    height:48px;
-
-}
-
-.form-control:focus{
-
-    box-shadow:none;
-
-    border-color:#0d6efd;
-
-}
-
-/*==============================*/
-
-.progress{
-
-    height:28px;
-
-    border-radius:20px;
-
-    overflow:hidden;
-
-}
-
-.progress-bar{
-
-    font-weight:bold;
-
-    font-size:14px;
-
-}
-
-/*==============================*/
-
-.table{
-
-    margin-bottom:0;
-
-}
-
-.table thead th{
-
-    vertical-align:middle;
-
-    white-space:nowrap;
-
-    font-size:15px;
-
+body {
+    background: #edf2f7;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
-
-.table tbody td{
-
-    vertical-align:middle;
 
-    font-size:15px;
-
+.container-fluid {
+    max-width: 1500px;
 }
-
-.table tbody tr{
 
-    transition:.15s;
-
+/* 2. CARD & STATS */
+.card {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: .25s;
 }
-
-.table tbody tr:hover{
 
-    background:#f4f8ff;
-
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,0,0,.08);
 }
-
-/*==============================*/
-
-.badge{
 
-    font-size:13px;
-
-    padding:8px 14px;
-
-    border-radius:20px;
-
+.stat-card {
+    border-radius: 18px;
+    transition: .3s;
 }
-
-.badge-success{
 
-    background:#198754;
-
-    color:#fff;
-
+.stat-card:hover {
+    transform: scale(1.02);
 }
-
-.badge-danger{
 
-    background:#dc3545;
-
-    color:#fff;
-
+.stat-card h6 {
+    opacity: .9;
+    font-weight: 600;
+    letter-spacing: 1px;
 }
-
-/*==============================*/
-
-.table td button{
 
-    min-width:95px;
-
+.stat-card h2 {
+    font-size: 42px;
+    margin-top: 12px;
+    font-weight: bold;
 }
-
-/*==============================*/
-
-.pagination{
-
-    margin:0;
 
+/* 3. BUTTONS & FORMS */
+.btn {
+    border-radius: 10px;
+    font-weight: 600;
+    transition: .2s;
 }
-
-.page-link{
-
-    border-radius:8px!important;
-
-    margin:0 2px;
-
-    color:#0d6efd;
 
+.btn:hover {
+    transform: translateY(-1px);
 }
 
-.page-item.active .page-link{
-
-    background:#0d6efd;
-
-    border-color:#0d6efd;
-
+.form-control {
+    border-radius: 10px;
+    height: 48px;
 }
-
-/*==============================*/
-
-.loading{
-
-    padding:60px;
-
-    text-align:center;
 
+.form-control:focus {
+    box-shadow: none;
+    border-color: #0d6efd;
 }
 
-.loading i{
-
-    font-size:60px;
-
-    color:#0d6efd;
-
-    animation:spin 1s linear infinite;
-
+.progress {
+    height: 28px;
+    border-radius: 20px;
+    overflow: hidden;
 }
-
-/*==============================*/
-
-.empty{
-
-    padding:70px;
 
-    text-align:center;
-
-    color:#777;
-
+.progress-bar {
+    font-weight: bold;
+    font-size: 14px;
 }
-
-.empty i{
 
-    font-size:70px;
-
-    margin-bottom:20px;
-
-    color:#bbb;
-
+/* 4. TABLE STYLES */
+.table {
+    margin-bottom: 0;
 }
-
-/*==============================*/
 
-.toast-box{
-
-    position:fixed;
-
-    top:20px;
-
-    right:20px;
-
-    z-index:9999;
-
+.table thead th {
+    vertical-align: middle;
+    white-space: nowrap;
+    font-size: 15px;
 }
-
-/*==============================*/
-
-::-webkit-scrollbar{
-
-    width:10px;
 
-    height:10px;
-
+.table tbody td {
+    vertical-align: middle;
+    font-size: 15px;
 }
-
-::-webkit-scrollbar-thumb{
-
-    background:#c5c5c5;
 
-    border-radius:20px;
-
+.table tbody tr {
+    transition: .15s;
 }
-
-::-webkit-scrollbar-thumb:hover{
 
-    background:#999;
-
+.table tbody tr:hover {
+    background: #f4f8ff;
 }
-
-/*==============================*/
 
-.fade-in{
-
-    animation:fadeIn .25s;
-
+.table td button {
+    min-width: 95px;
 }
-
-@keyframes fadeIn{
 
-from{
-
-opacity:0;
-
-transform:translateY(10px);
-
+/* 5. BADGES & UTILITIES */
+.badge {
+    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: 20px;
 }
-
-to{
 
-opacity:1;
-
-transform:translateY(0);
-
+.badge-success {
+    background: #198754;
+    color: #fff;
 }
 
+.badge-danger {
+    background: #dc3545;
+    color: #fff;
 }
-
-/*==============================*/
 
-@keyframes spin{
-
-from{
-
-transform:rotate(0deg);
-
+.badge-user {
+    background-color: #e8f0fe;
+    color: #1a73e8;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border: 1px solid #c2e7ff;
 }
-
-to{
 
-transform:rotate(360deg);
-
+.pagination {
+    margin: 0;
 }
 
+.page-link {
+    border-radius: 8px !important;
+    margin: 0 2px;
+    color: #0d6efd;
 }
-
-/*==============================*/
-
-.text-name{
-
-    font-weight:700;
 
-    color:#0d6efd;
-
+.page-item.active .page-link {
+    background: #0d6efd;
+    border-color: #0d6efd;
 }
-
-.text-address{
-
-    color:#555;
-
-    font-size:14px;
 
+/* 6. STATE INDICATORS & ANIMATIONS */
+.loading {
+    padding: 60px;
+    text-align: center;
 }
 
-/*==============================*/
-
-.search-highlight{
-
-    background:yellow;
-
-    padding:1px 3px;
-
+.loading i {
+    font-size: 60px;
+    color: #0d6efd;
+    animation: spin 1s linear infinite;
 }
-
-/*==============================*/
-
-@media(max-width:992px){
-
-.stat-card{
 
-margin-bottom:20px;
-
+.empty {
+    padding: 70px;
+    text-align: center;
+    color: #777;
 }
-
-.table{
-
-font-size:14px;
 
+.empty i {
+    font-size: 70px;
+    margin-bottom: 20px;
+    color: #bbb;
 }
 
-.btn{
-
-width:100%;
-
-margin-top:8px;
-
+.toast-box {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
 }
-
-#pageInfo{
 
-margin-bottom:10px;
-
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
 }
 
+::-webkit-scrollbar-thumb {
+    background: #c5c5c5;
+    border-radius: 20px;
 }
-
-/*==============================*/
-
-@media(max-width:768px){
 
-.container-fluid{
-
-padding:10px;
-
+::-webkit-scrollbar-thumb:hover {
+    background: #999;
 }
-
-.card-body{
-
-padding:15px;
 
+.fade-in {
+    animation: fadeIn .25s;
 }
 
-h2{
-
-font-size:22px;
-
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
-
-.stat-card h2{
-
-font-size:34px;
 
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
-.table thead{
-
-display:none;
-
+.text-name {
+    font-weight: 700;
+    color: #0d6efd;
 }
-
-.table,
-.table tbody,
-.table tr,
-.table td{
-
-display:block;
 
-width:100%;
-
+.text-address {
+    color: #555;
+    font-size: 14px;
 }
-
-.table tr{
-
-margin-bottom:15px;
 
-border-bottom:2px solid #eee;
-
-padding-bottom:10px;
-
+.search-highlight {
+    background: yellow;
+    padding: 1px 3px;
 }
-
-.table td{
-
-text-align:left!important;
 
-padding-left:45%;
-
-position:relative;
-
+/* ==========================================
+   7. NAVIGATION MENU STYLES (DÙNG CHUNG)
+   ========================================== */
+.action-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
-
-.table td::before{
-
-position:absolute;
-
-left:10px;
-
-font-weight:bold;
-
-color:#666;
 
+.menu-group, .tools-group {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
 }
 
-.table td:nth-child(1)::before{
-
-content:"STT";
-
+.divider {
+    height: 1px;
+    background-color: #e9ecef;
+    margin: 4px 0;
 }
-
-.table td:nth-child(2)::before{
 
-content:"Họ tên";
-
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+    color: #495057;
+    transition: all 0.2s ease;
+    text-align: center;
+    cursor: pointer;
 }
-
-.table td:nth-child(3)::before{
 
-content:"Ngày sinh";
-
+.nav-item i {
+    font-size: 1.1rem;
+    margin-bottom: 3px;
 }
-
-.table td:nth-child(4)::before{
 
-content:"Giới tính";
+/* Màu sắc nút Menu */
+.item-home { color: #0d6efd; border-color: #b6d4fe; background-color: #f0f7ff; }
+.item-manage { color: #198754; border-color: #a3cfbb; background-color: #f1f9f5; }
+.item-stat { color: #0dcaf0; border-color: #9eeaf9; background-color: #f0fcff; }
+.item-admin { color: #6f42c1; border-color: #c5b3e6; background-color: #f8f5fc; }
+.item-log { color: #ffc107; border-color: #ffe69c; background-color: #fffdf5; }
+.item-excel { color: #ffffff; border-color: #198754; background-color: #198754; }
+.item-logout { color: #dc3545; border-color: #f5c2c7; background-color: #fff8f8; }
 
+.nav-item:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
 }
 
-.table td:nth-child(5)::before{
+/* ==========================================
+   8. MEDIA QUERIES (DESKTOP >= 768px)
+   ========================================== */
+@media (min-width: 768px) {
+    .action-bar {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }
 
-content:"Địa chỉ";
+    .menu-group, .tools-group {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px !important;
+    }
 
-}
-
-.table td:nth-child(6)::before{
+    .nav-item {
+        flex-direction: row !important;
+        padding: 8px 16px !important;
+        font-size: 0.88rem !important;
+        border-radius: 6px !important;
+        height: 38px;
+    }
 
-content:"Trạng thái";
+    .nav-item i {
+        margin-bottom: 0 !important;
+        margin-right: 6px !important;
+        font-size: 1rem !important;
+    }
 
+    /* Hover hiệu ứng nổi cho Desktop */
+    .item-home:hover { background-color: #0d6efd; color: white; }
+    .item-manage:hover { background-color: #198754; color: white; }
+    .item-stat:hover { background-color: #0dcaf0; color: white; }
+    .item-admin:hover { background-color: #6f42c1; color: white; }
+    .item-excel:hover { background-color: #146c43; }
+    .item-logout:hover { background-color: #dc3545; color: white; }
 }
 
-.table td:nth-child(7)::before{
+/* ==========================================
+   9. MEDIA QUERIES (TABLET & MOBILE <= 992px)
+   ========================================== */
+@media (max-width: 992px) {
+    .stat-card {
+        margin-bottom: 20px;
+    }
 
-content:"Thao tác";
-
-}
+    .table {
+        font-size: 14px;
+    }
 
+    #pageInfo {
+        margin-bottom: 10px;
+    }
 }
-/* ===========================
-   Mobile
-=========================== */
 
-@media (max-width:768px){
+/* ==========================================
+   10. MEDIA QUERIES (MOBILE ONLY <= 768px)
+   ========================================== */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 10px;
+    }
 
-.stat-card{
+    .card-body {
+        padding: 15px;
+    }
 
-    padding:8px;
+    h2 {
+        font-size: 22px;
+    }
 
-}
-
-.stat-card h2{
+    .stat-card {
+        padding: 8px;
+    }
 
-    font-size:22px;
+    .stat-card h2 {
+        font-size: 22px;
+        margin: 0;
+    }
 
-    margin:0;
+    .stat-card h6 {
+        font-size: 11px;
+        margin-bottom: 2px;
+    }
 
-}
+    /* Chuyển bảng dữ liệu thành dạng thẻ trên điện thoại */
+    .table thead {
+        display: none;
+    }
 
-.stat-card h6{
+    .table, .table tbody, .table tr, .table td {
+        display: block;
+        width: 100%;
+    }
 
-    font-size:11px;
+    .table tr {
+        margin-bottom: 15px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
+    }
 
-    margin-bottom:2px;
+    .table td {
+        text-align: left !important;
+        padding-left: 45%;
+        position: relative;
+    }
 
-}
+    .table td::before {
+        position: absolute;
+        left: 10px;
+        font-weight: bold;
+        color: #666;
+    }
 
+    .table td:nth-child(1)::before { content: "STT"; }
+    .table td:nth-child(2)::before { content: "Họ tên"; }
+    .table td:nth-child(3)::before { content: "Ngày sinh"; }
+    .table td:nth-child(4)::before { content: "Giới tính"; }
+    .table td:nth-child(5)::before { content: "Địa chỉ"; }
+    .table td:nth-child(6)::before { content: "Trạng thái"; }
+    .table td:nth-child(7)::before { content: "Thao tác"; }
 }

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý danh sách người dân</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .table-responsive { max-height: 72vh; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="fw-bold text-primary"><i class="bi bi-people-fill"></i> QUẢN LÝ DANH SÁCH NGƯỜI DÂN</h3>
+            <div>
+                <span id="userInfo" class="me-3 fw-bold text-secondary"></span>
+                <a href="/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-house"></i> Trang chủ</a>
+                <button onclick="logout()" class="btn btn-danger btn-sm"><i class="bi bi-box-arrow-right"></i> Đăng xuất</button>
+            </div>
+        </div>
+
+        <div class="card p-3 mb-3">
+            <div class="row g-2">
+                <!-- THANH TÌM KIẾM -->
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Tìm kiếm theo STT, Họ tên hoặc Địa chỉ..." onkeyup="filterData()">
+                    </div>
+                </div>
+                
+                <!-- NÚT THÊM MỚI -->
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-success" onclick="openAddModal()">
+                        <i class="bi bi-plus-circle"></i> Thêm người mới
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BẢNG DANH SÁCH -->
+        <div class="card p-3">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle">
+                    <thead class="table-dark sticky-top">
+                        <tr>
+                            <th>STT</th>
+                            <th>Họ và tên</th>
+                            <th>Ngày sinh</th>
+                            <th>Giới tính</th>
+                            <th>Địa chỉ</th>
+                            <th>Trạng thái</th>
+                            <th>Người nhập</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTable">
+                        <tr><td colspan="8" class="text-center">Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL THÊM / SỬA -->
+    <div class="modal fade" id="personModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalTitle">Thêm người dân</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="personForm">
+                        <input type="hidden" id="personId">
+                        <div class="mb-2">
+                            <label class="form-label">STT</label>
+                            <input type="number" id="stt" class="form-control" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Họ và tên</label>
+                            <input type="text" id="hoten" class="form-control" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Ngày sinh</label>
+                            <input type="text" id="ngaysinh" class="form-control" placeholder="DD/MM/YYYY">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Giới tính</label>
+                            <select id="gioitinh" class="form-select">
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ">Nữ</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Địa chỉ</label>
+                            <input type="text" id="diachi" class="form-control">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Trạng thái khám</label>
+                            <select id="dakham" class="form-select">
+                                <option value="0">Chưa khám</option>
+                                <option value="1">Đã khám</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="btnSave" onclick="savePerson()">Lưu lại</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let allData = [];
+        let currentUser = null;
+        let personModal;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            personModal = new bootstrap.Modal(document.getElementById('personModal'));
+            loadUserData();
+        });
+
+        // 1. Tải thông tin tài khoản hiện tại
+        async function loadUserData() {
+            try {
+                const res = await fetch('/api/me');
+                if (!res.ok) {
+                    window.location.href = '/';
+                    return;
+                }
+                currentUser = await res.json();
+                document.getElementById('userInfo').innerText = `Tài khoản: ${currentUser.fullname} (${currentUser.role})`;
+                
+                // Sau khi có thông tin User thì tải danh sách ngay
+                await loadData();
+            } catch (err) {
+                window.location.href = '/';
+            }
+        }
+
+        // 2. Tải lại bảng dữ liệu từ Server
+        async function loadData() {
+            try {
+                const res = await fetch('/api/nguoi');
+                const data = await res.json();
+                if (data.success) {
+                    allData = data.data;
+                    filterData(); // Render lại bảng (giữ nguyên kết quả đang tìm kiếm nếu có)
+                }
+            } catch (err) {
+                console.error("Lỗi tải danh sách:", err);
+            }
+        }
+
+        // 3. Render giao diện bảng & Kiểm tra quyền thao tác
+        function renderTable(list) {
+            const tbody = document.getElementById('dataTable');
+            if (!list || list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">Không tìm thấy dữ liệu</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(item => {
+                // KIỂM TRA QUYỀN SỬA / XÓA:
+                // Được sửa/xóa nếu: Là Admin HOẶC ID người tạo (checked_by) khớp với ID tài khoản đang đăng nhập (currentUser.id)
+                const isOwner = currentUser && (currentUser.role === 'admin' || Number(item.checked_by) === Number(currentUser.id));
+
+                let actionBtns = '';
+                if (isOwner) {
+                    actionBtns = `
+                        <button class="btn btn-warning btn-sm me-1" onclick="openEditModal(${item.id})">
+                            <i class="bi bi-pencil-square"></i> Sửa
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deletePerson(${item.id})">
+                            <i class="bi bi-trash"></i> Xóa
+                        </button>
+                    `;
+                } else {
+                    actionBtns = `<span class="badge bg-light text-secondary">Không có quyền</span>`;
+                }
+
+                return `
+                    <tr>
+                        <td><b>${item.stt || ''}</b></td>
+                        <td class="fw-bold">${item.hoten || ''}</td>
+                        <td>${item.ngaysinh || ''}</td>
+                        <td>${item.gioitinh || ''}</td>
+                        <td>${item.diachi || ''}</td>
+                        <td>
+                            ${item.dakham == 1 
+                                ? '<span class="badge bg-success">Đã khám</span>' 
+                                : '<span class="badge bg-secondary">Chưa khám</span>'}
+                        </td>
+                        <td><small class="text-muted">${item.checked_by_name || 'Hệ thống'}</small></td>
+                        <td class="text-center">${actionBtns}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 4. Tìm kiếm lọc trực tiếp
+        function filterData() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            if (!query) {
+                renderTable(allData);
+                return;
+            }
+
+            const filtered = allData.filter(item => {
+                const sttMatch = String(item.stt || '').includes(query);
+                const nameMatch = (item.hoten || '').toLowerCase().includes(query) || (item.hoten_khongdau || '').toLowerCase().includes(query);
+                const addressMatch = (item.diachi || '').toLowerCase().includes(query) || (item.diachi_khongdau || '').toLowerCase().includes(query);
+                
+                return sttMatch || nameMatch || addressMatch;
+            });
+
+            renderTable(filtered);
+        }
+
+        // 5. Mở Modal Thêm mới
+        function openAddModal() {
+            document.getElementById('modalTitle').innerText = "Thêm người dân mới";
+            document.getElementById('personId').value = "";
+            document.getElementById('personForm').reset();
+            personModal.show();
+        }
+
+        // 6. Mở Modal Sửa
+        function openEditModal(id) {
+            const item = allData.find(x => x.id === id);
+            if (!item) return;
+
+            document.getElementById('modalTitle').innerText = "Cập nhật thông tin";
+            document.getElementById('personId').value = item.id;
+            document.getElementById('stt').value = item.stt || "";
+            document.getElementById('hoten').value = item.hoten || "";
+            document.getElementById('ngaysinh').value = item.ngaysinh || "";
+            document.getElementById('gioitinh').value = item.gioitinh || "Nam";
+            document.getElementById('diachi').value = item.diachi || "";
+            document.getElementById('dakham').value = item.dakham == 1 ? "1" : "0";
+
+            personModal.show();
+        }
+
+        // 7. Thêm / Cập nhật người dân & TỰ ĐỘNG CẬP NHẬT BẢNG
+        async function savePerson() {
+            const id = document.getElementById('personId').value;
+            const btnSave = document.getElementById('btnSave');
+            
+            const payload = {
+                stt: Number(document.getElementById('stt').value),
+                hoten: document.getElementById('hoten').value.trim(),
+                ngaysinh: document.getElementById('ngaysinh').value.trim(),
+                gioitinh: document.getElementById('gioitinh').value,
+                diachi: document.getElementById('diachi').value.trim(),
+                dakham: Number(document.getElementById('dakham').value)
+            };
+
+            if (!payload.hoten) {
+                alert("Vui lòng nhập họ và tên!");
+                return;
+            }
+
+            btnSave.disabled = true;
+            btnSave.innerText = "Đang lưu...";
+
+            const url = id ? `/api/nguoi/${id}` : '/api/nguoi';
+            const method = id ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+
+                if (result.success || result.ok) {
+                    personModal.hide();
+                    // Lập tức tải lại danh sách mới từ Server
+                    await loadData();
+                } else {
+                    alert(result.message || "Lỗi thao tác");
+                }
+            } catch (err) {
+                alert("Không thể kết nối đến máy chủ");
+            } finally {
+                btnSave.disabled = false;
+                btnSave.innerText = "Lưu lại";
+            }
+        }
+
+        // 8. Xóa người dân & TỰ ĐỘNG CẬP NHẬT BẢNG
+        async function deletePerson(id) {
+            if (!confirm("Bạn có chắc chắn muốn xóa dòng dữ liệu này?")) return;
+
+            try {
+                const res = await fetch(`/api/nguoi/${id}`, { method: 'DELETE' });
+                const result = await res.json();
+                if (result.success) {
+                    // Xóa thành công -> Gọi hàm loadData() tải lại toàn bộ danh sách ngay lập tức
+                    await loadData();
+                } else {
+                    alert(result.message || "Xóa không thành công");
+                }
+            } catch (err) {
+                alert("Lỗi kết nối máy chủ");
+            }
+        }
+
+        // 9. Đăng xuất
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

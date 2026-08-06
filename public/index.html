@@ -27,81 +27,65 @@
 
     <!-- HEADER -->
 
-    <div class="card shadow border-0 mb-4">
+  <div class="header-container mb-4">
+    <!-- 1. THANH TIÊU ĐỀ & USER INFO -->
+    <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded shadow-sm border mb-3">
+        <div>
+            <h5 class="fw-bold text-primary mb-0 d-flex align-items-center gap-2 fs-6 fs-md-5">
+                <i class="fa-solid fa-notes-medical"></i> QUẢN LÝ KHÁM SỨC KHỎE
+            </h5>
+            <small class="text-muted d-none d-md-inline">Quản lý danh sách người dân và trạng thái khám</small>
+        </div>
+        
+        <!-- User Info Badge -->
+        <div id="userInfo" class="badge bg-light text-dark border px-3 py-2 fs-6">
+            <i class="fa-solid fa-user-shield text-primary me-1"></i> Admin
+        </div>
+    </div>
 
-        <div class="card-body">
+    <!-- 2. THANH MENU VÀ THAO TÁC -->
+    <div class="action-bar bg-white p-2 p-md-3 rounded shadow-sm border">
+        
+        <!-- Nhóm Menu Chuyển Trang -->
+        <div class="menu-group">
+            <a href="/index.html" class="nav-item item-home">
+                <i class="fa-solid fa-house"></i>
+                <span>Trang chủ</span>
+            </a>
+            <a href="/quanly_nguoi.html" class="nav-item item-manage">
+                <i class="fa-solid fa-users-gear"></i>
+                <span>Người khám</span>
+            </a>
+            <a href="/thongke.html" class="nav-item item-stat">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Thống kê</span>
+            </a>
+             <a href="users.html" class="nav-item item-admin" id="btnAdminUsers">
+                 <i class="fa-solid fa-gear"></i>
+                 <span>Tài khoản</span>
+             </a>
+        </div>
 
-            <div class="row align-items-center">
+        <div class="divider d-block d-md-none"></div>
 
-                <div class="col-lg-8">
-
-                    <h2 class="fw-bold text-primary mb-1">
-
-                        <i class="fa-solid fa-hospital-user"></i>
-
-                        QUẢN LÝ KHÁM SỨC KHỎE TOÀN XÃ
-
-                    </h2>
-
-                    <div class="text-secondary">
-
-                        Quản lý danh sách người dân và trạng thái khám
-
-                    </div>
-
-                </div>
-
-                <div class="col-lg-4 text-end">
-
-                    <div class="mb-2">
-
-                        <span id="userInfo"
-                            class="fw-bold text-primary"></span>
-
-                    </div>
-                    <a href="/thongke" style="background: #17a2b8; color: #fff; padding: 8px 15px; border-radius: 4px; text-decoration: none; font-weight: bold;">
-                        📊 Thống kê theo Ấp
-                    </a>
-                    <button class="btn btn-warning d-none" id="btnLogs">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
-                        Nhật ký
-                    </button>
-                    
-
-                    <button class="btn btn-primary d-none"
-                            id="btnUsers">
-
-                        <i class="fa-solid fa-users"></i>
-
-                        Quản lý tài khoản
-
-                    </button>
-
-                    <button class="btn btn-success"
-                            id="btnExport">
-
-                        <i class="fa-solid fa-file-excel"></i>
-
-                        Xuất Excel
-
-                    </button>
-
-                    <button class="btn btn-danger"
-                            id="btnLogout">
-
-                        <i class="fa-solid fa-right-from-bracket"></i>
-
-                        Đăng xuất
-
-                    </button>
-
-                </div>
-
-            </div>
-
+        <!-- Nhóm Nút Thao Tác -->
+        <div class="tools-group">
+            <button class="nav-item item-log d-none" id="btnLogs">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Nhật ký</span>
+            </button>
+            <button class="nav-item item-excel" id="btnExport">
+                <i class="fa-solid fa-file-excel"></i>
+                <span>Xuất Excel</span>
+            </button>
+            <button class="nav-item item-logout" id="btnLogout">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Đăng xuất</span>
+            </button>
         </div>
 
     </div>
+</div>
 
 
     <!-- THỐNG KÊ -->

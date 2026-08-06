@@ -5,16 +5,17 @@ const XLSX = require("xlsx");
 const fs = require("fs");
 const path = require("path");
 const { Pool } = require("pg");
-//require("dotenv").config();
+// require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Kết nối database đơn giản
+// Kết nối database
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
+
 //===============================
 // CẤU HÌNH MIDDLEWARE & SESSION
 //===============================
@@ -32,12 +33,11 @@ if (!fs.existsSync("uploads")) {
     fs.mkdirSync("uploads");
 }
 
-const upload = multer({
-    dest: "uploads/"
-});
-// Middleware kiểm tra đăng nhập (Bất kỳ user nào đã đăng nhập đều dùng được)
+const upload = multer({ dest: "uploads/" });
+
+// Middleware kiểm tra đăng nhập
 function requireLogin(req, res, next) {
-    if (!req.session.user) {
+    if (!req.session || !req.session.user) {
         return res.status(401).json({ success: false, message: "Chưa đăng nhập" });
     }
     next();
@@ -45,7 +45,7 @@ function requireLogin(req, res, next) {
 
 // Middleware chỉ dành riêng cho Admin
 function requireAdmin(req, res, next) {
-    if (!req.session.user) {
+    if (!req.session || !req.session.user) {
         return res.status(401).json({ success: false, message: "Chưa đăng nhập" });
     }
     if (req.session.user.role !== "admin") {
@@ -53,6 +53,7 @@ function requireAdmin(req, res, next) {
     }
     next();
 }
+
 //===============================
 // TẠO BẢNG & TẠO TÀI KHOẢN ADMIN MẶC ĐỊNH
 //===============================
@@ -159,26 +160,6 @@ async function addLog(user, action, targetId, targetName) {
     } catch (err) {
         console.error("Lỗi ghi log:", err);
     }
-}
-
-//===============================
-// AUTHENTICATION MIDDLEWARES
-//===============================
-function requireLogin(req, res, next) {
-    if (!req.session.user) {
-        return res.status(401).json({ success: false, message: "Chưa đăng nhập" });
-    }
-    next();
-}
-
-function requireAdmin(req, res, next) {
-    if (!req.session.user) {
-        return res.status(401).json({ success: false, message: "Chưa đăng nhập" });
-    }
-    if (req.session.user.role !== "admin") {
-        return res.status(403).json({ success: false, message: "Không có quyền" });
-    }
-    next();
 }
 
 //===============================
@@ -340,7 +321,7 @@ app.delete("/api/users/:id", requireAdmin, async (req, res) => {
 });
 
 //===============================
-// API IMPORT EXCEL (BULK INSERT NHANH)
+// API IMPORT EXCEL (BULK INSERT)
 //===============================
 app.post("/api/import", upload.single("excel"), async (req, res) => {
     const client = await pool.connect();
@@ -375,7 +356,7 @@ app.post("/api/import", upload.single("excel"), async (req, res) => {
                 r["Trạng thái"] || r["Kết quả"] || r["__EMPTY"] || ""
             ).toLowerCase();
 
-            if (trangthai.includes("đã") || trangthai.includes("da")) {
+            if (trangthai.includes("đã") || trangthai.includes("da") || trangthai === "1") {
                 dakham = 1;
             }
 
@@ -510,7 +491,7 @@ app.get("/api/person/:id", async (req, res) => {
 });
 
 //===============================
-// API CẬP NHẬT TRẠNG THÁI KHÁM
+// API CẬP NHẬT TRẠNG THÁI KHÁM & CRUD NGUỜI
 //===============================
 app.post("/api/update", requireLogin, async (req, res) => {
     try {
@@ -553,6 +534,83 @@ app.post("/api/update", requireLogin, async (req, res) => {
     }
 });
 
+app.get("/api/nguoi", requireLogin, async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM nguoi ORDER BY id DESC");
+        res.json({ success: true, data: result.rows, currentUser: req.session.user });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+app.post("/api/nguoi", requireLogin, async (req, res) => {
+    const { stt, hoten, hoten_khongdau, ngaysinh, gioitinh, diachi, diachi_khongdau, dakham } = req.body;
+    try {
+        const isKham = (dakham === 1 || dakham === "1" || dakham === true) ? 1 : 0;
+        
+        // Lưu kèm theo ID và Tên người tạo từ Session
+        const result = await pool.query(
+            `INSERT INTO nguoi (stt, hoten, hoten_khongdau, ngaysinh, gioitinh, diachi, diachi_khongdau, dakham, checked_by, checked_by_name, checked_at) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+            [
+                stt, 
+                hoten, 
+                hoten_khongdau || removeVietnamese(hoten), 
+                ngaysinh, 
+                gioitinh, 
+                diachi, 
+                diachi_khongdau || removeVietnamese(diachi), 
+                isKham,
+                req.session.user.id,
+                req.session.user.fullname,
+                new Date().toISOString()
+            ]
+        );
+        
+        await addLog(req.session.user, "Thêm người dân", result.rows[0].id, hoten);
+        res.json({ success: true, message: "Thêm thành công!", data: result.rows[0] });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+app.put("/api/nguoi/:id", requireLogin, async (req, res) => {
+    const { id } = req.params;
+    const { stt, hoten, hoten_khongdau, ngaysinh, gioitinh, diachi, diachi_khongdau, dakham } = req.body;
+    try {
+        const isKham = (dakham === 1 || dakham === "1" || dakham === true) ? 1 : 0;
+        await pool.query(
+            `UPDATE nguoi 
+             SET stt=$1, hoten=$2, hoten_khongdau=$3, ngaysinh=$4, gioitinh=$5, diachi=$6, diachi_khongdau=$7, dakham=$8 
+             WHERE id=$9`,
+            [
+                stt, 
+                hoten, 
+                hoten_khongdau || removeVietnamese(hoten), 
+                ngaysinh, 
+                gioitinh, 
+                diachi, 
+                diachi_khongdau || removeVietnamese(diachi), 
+                isKham, 
+                id
+            ]
+        );
+        res.json({ success: true, message: "Cập nhật thành công!" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+app.delete("/api/nguoi/:id", requireAdmin, async (req, res) => {
+    const { id } = req.params;
+    try {
+        await pool.query("DELETE FROM nguoi WHERE id = $1", [id]);
+        res.json({ success: true, message: "Đã xóa thành công!" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
 //===============================
 // API THỐNG KÊ & LOGS
 //===============================
@@ -574,13 +632,8 @@ app.get("/api/stats", async (req, res) => {
     }
 });
 
-// API Thống kê người chưa khám theo từng Ấp
-//===============================
-// API THỐNG KÊ CHI TIẾT THEO ẤP (ĐÃ TÁCH SỐ NHÀ)
-//===============================
 app.get("/api/stats-by-ap", requireLogin, async (req, res) => {
     try {
-        // Sử dụng CASE WHEN / REGEXP_MATCHES để chuẩn hóa tên Ấp từ địa chỉ
         const result = await pool.query(`
             WITH ap_extracted AS (
                 SELECT 
@@ -633,7 +686,7 @@ app.get("/api/stats-by-ap", requireLogin, async (req, res) => {
         res.status(500).json({ ok: false, message: err.message });
     }
 });
-// API LẤY DANH SÁCH CHI TIẾT TỪNG NGƯỜI CHƯA KHÁM THEO ẤP
+
 app.get("/api/danh-sach-chi-tiet-ap", requireLogin, async (req, res) => {
     try {
         const ap = req.query.ap ? String(req.query.ap).trim() : "";
@@ -642,7 +695,6 @@ app.get("/api/danh-sach-chi-tiet-ap", requireLogin, async (req, res) => {
         let whereClause = ` WHERE dakham = 0 `;
         let params = [];
 
-        // Xử lý lọc chuẩn tên Ấp từ địa chỉ chi tiết
         if (ap === 'Ấp 6A') {
             whereClause += ` AND (UPPER(diachi) LIKE '%ẤP 6A%' OR UPPER(diachi) LIKE '%AP 6A%') `;
         } else if (ap === 'Ấp 6B') {
@@ -720,10 +772,6 @@ app.get("/api/export", requireAdmin, async (req, res) => {
     }
 });
 
-// API Xuất danh sách người chưa khám theo Ấp
-//===============================
-// API EXPORT DÂN CHƯA KHÁM THEO ẤP (ĐÃ TÁCH SỐ NHÀ)
-//===============================
 app.get("/api/export-chua-kham", requireLogin, async (req, res) => {
     try {
         const ap = req.query.ap ? String(req.query.ap).trim() : "";
@@ -742,13 +790,11 @@ app.get("/api/export-chua-kham", requireLogin, async (req, res) => {
         let queryParams = [];
 
         if (ap && ap !== "ALL") {
-            // Lọc theo ấp tương ứng
             queryText += ` AND (
                 UPPER(diachi) LIKE $1 
                 OR UPPER(diachi) LIKE $2
             )`;
             
-            // Xử lý loại trừ để tránh Ấp 6A bị lẫn vào Ấp 6
             if (ap === 'Ấp 6') {
                 queryText += ` AND UPPER(diachi) NOT LIKE '%6A%' AND UPPER(diachi) NOT LIKE '%6B%'`;
             } else if (ap === 'Ấp 7') {
@@ -781,8 +827,9 @@ app.get("/api/export-chua-kham", requireLogin, async (req, res) => {
         res.status(500).json({ ok: false, message: err.message });
     }
 });
+
 //===============================
-// TRANG CHỦ, ROUTE TRANG THỐNG KÊ & 404
+// ROUTE TRANG WEB & HANDLER LỖI
 //===============================
 app.get("/thongke", requireLogin, (req, res) => {
     res.sendFile(path.join(__dirname, "public", "thongke.html"));
@@ -792,11 +839,12 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Hứng lỗi 404 (Bắt buộc phải nằm ở gần cuối cùng)
+// Hứng lỗi 404
 app.use((req, res) => {
     res.status(404).json({ ok: false, message: "API không tồn tại" });
 });
 
+// Handler bắt lỗi toàn cục
 app.use((err, req, res, next) => {
     console.error(err);
     res.status(500).json({ ok: false, message: err.message });
