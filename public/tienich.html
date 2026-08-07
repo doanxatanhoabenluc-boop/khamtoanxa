@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Tiện Ích & Báo Cáo</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .accordion-button:not(.collapsed) {
+            background-color: #e7f1ff;
+            color: #0c63e4;
+        }
+        .accordion-button:focus {
+            box-shadow: none;
+        }
+        .badge-clickable {
+            cursor: pointer;
+            transition: transform 0.15s ease-in-out;
+        }
+        .badge-clickable:hover {
+            transform: scale(1.08);
+        }
+
+        /* --- SỬA LỖI 1: KHÔNG CHO CHỮ SỐ XUỐNG DÒNG & RESPONSIVE FONT --- */
+        .stat-card {
+            border-radius: 0.5rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        .stat-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            opacity: 0.9;
+            white-space: nowrap;
+        }
+        .stat-number {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-top: 0.2rem;
+            white-space: nowrap; /* Chống rớt dòng tuyệt đối */
+        }
+
+        /* Tối ưu kích thước chữ số trên di động */
+        @media (max-width: 576px) {
+            .stat-title {
+                font-size: 0.65rem;
+            }
+            .stat-number {
+                font-size: 1.15rem; /* Tự động thu nhỏ vừa khít ô */
+            }
+            .stat-card .card-body {
+                padding: 0.5rem 0.25rem !important; /* Thu nhỏ padding để tăng diện tích chứa số */
+            }
+        }
+
+        /* --- SỬA LỖI 2: DÀN ĐỀU VÀ CÂN BẰNG TABS TRÊN DI ĐỘNG --- */
+        .nav-pills-custom {
+            display: flex;
+            width: 100%;
+            gap: 0.5rem;
+        }
+        .nav-pills-custom .nav-item {
+            flex: 1 1 0%; /* Chia đều 50% cho mỗi tab trên mọi màn hình */
+        }
+        .nav-pills-custom .nav-link {
+            width: 100%;
+            text-align: center;
+            white-space: nowrap;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+        }
+        @media (max-width: 576px) {
+            .nav-pills-custom .nav-link {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.2rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <div class="container py-3 py-md-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 mb-md-4">
+            <h4 class="fw-bold text-primary mb-0 fs-5 fs-md-3"><i class="fa-solid fa-toolbox me-1 me-md-2"></i> Trình Tiện Ích & Báo Cáo</h4>
+            <a href="/" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left me-1"></i> Trang chủ</a>
+        </div>
+
+        <!-- THỐNG KÊ TIỆN ÍCH (ĐÃ SỬA LỖI VỠ SỐ) -->
+        <div class="row row-cols-3 g-2 mb-3 mb-md-4">
+            <div class="col">
+                <div class="card stat-card bg-primary text-white text-center h-100 border-0 shadow-sm">
+                    <div class="card-body p-2 p-md-3">
+                        <div class="stat-title">TỔNG HỒ SƠ</div>
+                        <div class="stat-number" id="statTotal">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card stat-card bg-success text-white text-center h-100 border-0 shadow-sm">
+                    <div class="card-body p-2 p-md-3">
+                        <div class="stat-title">ĐÃ KHÁM</div>
+                        <div class="stat-number" id="statExamined">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card stat-card bg-danger text-white text-center h-100 border-0 shadow-sm">
+                    <div class="card-body p-2 p-md-3">
+                        <div class="stat-title">CHƯA KHÁM</div>
+                        <div class="stat-number" id="statNotExamined">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB ĐIỀU HƯỚNG TIỆN ÍCH (ĐÃ SỬA LỖI ĐÃN HÀNG/TRÀN DÒNG TRÊN DI ĐỘNG) -->
+        <ul class="nav nav-pills nav-pills-custom mb-3" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold" id="pills-report-tab" data-bs-toggle="pill" data-bs-target="#pills-report" type="button">
+                    <i class="fa-solid fa-chart-pie me-1"></i> Báo Cáo & Thống Kê
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold" id="pills-duplicate-tab" data-bs-toggle="pill" data-bs-target="#pills-duplicate" type="button">
+                    <i class="fa-solid fa-clone me-1"></i> Kiểm Tra Trùng Dữ Liệu
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="pills-tabContent">
+            
+            <!-- TAB 1: BÁO CÁO & THỐNG KÊ -->
+            <div class="tab-pane fade show active" id="pills-report" role="tabpanel">
+                <div class="accordion shadow-sm" id="accordionReports">
+                    
+                    <!-- 1. BÁO CÁO THEO ẤP -->
+                    <div class="accordion-item border-0 mb-3 rounded overflow-hidden">
+                        <h2 class="accordion-header" id="headingAp">
+                            <button class="accordion-button fw-bold text-primary fs-6 fs-md-5" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAp">
+                                <i class="fa-solid fa-map-location-dot me-2"></i> 1. Báo cáo tiến độ khám sức khỏe theo Ấp
+                            </button>
+                        </h2>
+                        <div id="collapseAp" class="accordion-collapse collapse show" data-bs-parent="#accordionReports">
+                            <div class="accordion-body p-2 p-md-3">
+                                <p class="text-muted small fst-italic mb-2">
+                                    <i class="fa-solid fa-circle-info me-1"></i> Bấm vào số lượng <b class="text-success">"Đã khám"</b> hoặc <b class="text-danger">"Chưa khám"</b> để mở popup danh sách chi tiết.
+                                </p>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Ấp</th>
+                                                <th class="text-center">Tổng số</th>
+                                                <th class="text-center">Đã khám</th>
+                                                <th class="text-center">Chưa khám</th>
+                                                <th class="text-center" width="180">Tiến độ</th>
+                                                <th class="text-center" width="180">Thao tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="statByApTable">
+                                            <tr><td colspan="6" class="text-center py-4">Đang tải...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. BÁO CÁO THEO CÁN BỘ & NGÀY LÀM -->
+                    <div class="accordion-item border-0 rounded overflow-hidden">
+                        <h2 class="accordion-header" id="headingUserDate">
+                            <button class="accordion-button collapsed fw-bold text-success fs-6 fs-md-5" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUserDate">
+                                <i class="fa-solid fa-user-check me-2"></i> 2. Báo cáo theo Cán bộ nhập & Ngày thực hiện
+                            </button>
+                        </h2>
+                        <div id="collapseUserDate" class="accordion-collapse collapse" data-bs-parent="#accordionReports">
+                            <div class="accordion-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="60" class="text-center">STT</th>
+                                                <th>Họ tên cán bộ / Người thực hiện</th>
+                                                <th class="text-center">Ngày thực hiện</th>
+                                                <th class="text-center">Số hồ sơ đã đánh dấu</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="statByUserDateTable">
+                                            <tr><td colspan="4" class="text-center py-4">Đang tải...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 2: QUÉT DỮ LIỆU TRÙNG -->
+            <div class="tab-pane fade" id="pills-duplicate" role="tabpanel">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-2 p-md-3">
+                        <div class="row g-2 align-items-center mb-3">
+                            <div class="col-md-5">
+                                <label class="form-label fw-bold small mb-1" for="duplicateRule">Chọn quy tắc lọc trùng:</label>
+                                <select id="duplicateRule" class="form-select form-select-sm">
+                                    <option value="name_dob">Trùng Họ tên + Ngày sinh (Mặc định)</option>
+                                    <option value="name_address">Trùng Họ tên + Địa chỉ</option>
+                                    <option value="stt">Trùng số Thứ Tự (STT)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button class="btn btn-warning btn-sm fw-bold text-dark w-100" onclick="checkDuplicates()">
+                                    <i class="fa-solid fa-magnifying-glass me-1"></i> Quét Dữ Liệu Trùng
+                                </button>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <span class="badge bg-secondary p-2 fs-6 w-100 w-md-auto" id="duplicateCount">0 trùng lặp</span>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="60">STT</th>
+                                        <th>Họ và Tên</th>
+                                        <th>Ngày Sinh</th>
+                                        <th>Địa Chỉ</th>
+                                        <th>Trạng Thái</th>
+                                        <th>Người Đánh Dấu</th>
+                                        <th width="80" class="text-center">Thao Tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="duplicateTableBody">
+                                    <tr><td colspan="7" class="text-center text-muted py-4">Bấm "Quét Dữ Liệu Trùng" để bắt đầu kiểm tra.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- BOOTSTRAP 5 MODAL POPUP HIỂN THỊ DANH SÁCH CHI TIẾT -->
+    <div class="modal fade" id="modalChiTietAp" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header text-white" id="modalHeaderBg">
+                    <h5 class="modal-title fw-bold fs-6 fs-md-5" id="modalTitle">Danh sách chi tiết</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <table class="table table-striped table-hover align-middle mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th width="8%" class="text-center">STT</th>
+                                <th width="25%">Họ và tên</th>
+                                <th width="18%" class="text-center">Ngày sinh</th>
+                                <th width="12%" class="text-center">Giới tính</th>
+                                <th>Địa chỉ chi tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyNguoiChiTiet">
+                            <!-- Dữ liệu render tại đây -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer d-flex justify-content-between p-2">
+                    <span id="txtTongNguoi" class="fw-bold small"></span>
+                    <div>
+                        <button class="btn btn-sm btn-success" onclick="downloadExcelCurrentAp()">
+                            <i class="fa-solid fa-file-excel me-1"></i> Tải Excel
+                        </button>
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let currentSelectedAp = "";
+        let currentStatus = "0"; // "0": Chưa khám, "1": Đã khám
+        let modalChiTietInstance = null;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            modalChiTietInstance = new bootstrap.Modal(document.getElementById('modalChiTietAp'));
+            loadStatsData();
+            loadUserDateStats();
+        });
+
+        // 1. Tải số liệu tổng quan & Thống kê theo Ấp
+        async function loadStatsData() {
+            try {
+                const resStats = await fetch("/api/stats");
+                const stats = await resStats.json();
+                
+                if (document.getElementById("statTotal")) document.getElementById("statTotal").innerText = (stats.tong || 0).toLocaleString("vi-VN");
+                if (document.getElementById("statExamined")) document.getElementById("statExamined").innerText = (stats.dakham || 0).toLocaleString("vi-VN");
+                if (document.getElementById("statNotExamined")) document.getElementById("statNotExamined").innerText = (stats.chuakham || 0).toLocaleString("vi-VN");
+
+                const resAp = await fetch("/api/stats-by-ap");
+                const apResult = await resAp.json();
+                const tbody = document.getElementById("statByApTable");
+
+                if (apResult.ok && apResult.data && apResult.data.length > 0) {
+                    tbody.innerHTML = apResult.data.map(item => {
+                        const tenAp = item.ap || 'Khác / Chưa rõ Ấp';
+                        const tong = parseInt(item.tong_so || 0);
+                        const dakham = parseInt(item.dakham_count || 0);
+                        const chuakham = parseInt(item.chuakham_count || 0);
+                        const percent = tong > 0 ? ((dakham / tong) * 100).toFixed(1) : 0;
+                        const safeApName = escapeHtml(tenAp).replace(/'/g, "\\'");
+
+                        return `
+                            <tr>
+                                <td class="fw-bold text-primary">${escapeHtml(tenAp)}</td>
+                                <td class="text-center">${tong.toLocaleString("vi-VN")}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-success badge-clickable px-2 py-1" title="Bấm để xem danh sách" onclick="xemChiTietAp('${safeApName}', '1')">
+                                        ${dakham.toLocaleString("vi-VN")} người
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-danger badge-clickable px-2 py-1" title="Bấm để xem danh sách" onclick="xemChiTietAp('${safeApName}', '0')">
+                                        ${chuakham.toLocaleString("vi-VN")} người
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="progress flex-grow-1" style="height: 8px;">
+                                            <div class="progress-bar bg-success" style="width: ${percent}%"></div>
+                                        </div>
+                                        <span class="small fw-bold">${percent}%</span>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-success me-1" onclick="xemChiTietAp('${safeApName}', '1')">
+                                        <i class="fa-solid fa-eye"></i> Đã khám
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="xemChiTietAp('${safeApName}', '0')">
+                                        <i class="fa-solid fa-eye"></i> Chưa khám
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join("");
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Chưa có dữ liệu thống kê.</td></tr>';
+                }
+            } catch (err) {
+                console.error("Lỗi khi tải thống kê theo ấp:", err);
+                document.getElementById("statByApTable").innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Lỗi kết nối máy chủ!</td></tr>';
+            }
+        }
+
+        // 2. Mở Popup và nạp API danh sách chi tiết
+        async function xemChiTietAp(tenAp, status = "0") {
+            currentSelectedAp = tenAp || "Khác / Chưa rõ Ấp";
+            currentStatus = String(status);
+
+            const modalHeader = document.getElementById("modalHeaderBg");
+            const txtTong = document.getElementById("txtTongNguoi");
+            const isDaKham = currentStatus === "1";
+
+            if (isDaKham) {
+                modalHeader.className = "modal-header bg-success text-white";
+                txtTong.className = "fw-bold small text-success";
+                document.getElementById("modalTitle").innerText = `DANH SÁCH ĐÃ KHÁM - ${currentSelectedAp.toUpperCase()}`;
+            } else {
+                modalHeader.className = "modal-header bg-danger text-white";
+                txtTong.className = "fw-bold small text-danger";
+                document.getElementById("modalTitle").innerText = `DANH SÁCH CHƯA KHÁM - ${currentSelectedAp.toUpperCase()}`;
+            }
+
+            document.getElementById("tbodyNguoiChiTiet").innerHTML = '<tr><td colspan="5" class="text-center py-4"><i class="fa-solid fa-spinner fa-spin me-2"></i> Đang tải dữ liệu chi tiết...</td></tr>';
+            txtTong.innerText = "";
+            
+            modalChiTietInstance.show();
+
+            try {
+                const url = `/api/danh-sach-chi-tiet-ap?ap=${encodeURIComponent(currentSelectedAp)}&status=${currentStatus}`;
+                const res = await fetch(url);
+                const json = await res.json();
+
+                const tbody = document.getElementById("tbodyNguoiChiTiet");
+                tbody.innerHTML = "";
+
+                if (!json.ok || !json.data || json.data.length === 0) {
+                    const labelText = isDaKham ? "đã khám" : "chưa khám";
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Không tìm thấy dữ liệu ${labelText} cho ấp này.</td></tr>`;
+                    return;
+                }
+
+                const labelText = isDaKham ? "đã khám" : "chưa khám";
+                txtTong.innerText = `Tổng số: ${json.data.length.toLocaleString('vi-VN')} người ${labelText}`;
+
+                tbody.innerHTML = json.data.map((item, idx) => `
+                    <tr>
+                        <td class="text-center fw-bold text-muted">${item.stt || (idx + 1)}</td>
+                        <td class="fw-bold">${escapeHtml(item.hoten || '')}</td>
+                        <td class="text-center">${escapeHtml(item.ngaysinh || '')}</td>
+                        <td class="text-center">${escapeHtml(item.gioitinh || '')}</td>
+                        <td>${escapeHtml(item.diachi || '')}</td>
+                    </tr>
+                `).join('');
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById("tbodyNguoiChiTiet").innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Lỗi tải dữ liệu chi tiết!</td></tr>';
+            }
+        }
+
+        // 3. Tải File Excel theo Ấp và Trạng thái
+        function downloadExcelCurrentAp() {
+            if (currentSelectedAp) {
+                const route = currentStatus === "1" ? "/api/export-da-kham" : "/api/export-chua-kham";
+                window.location.href = `${route}?ap=${encodeURIComponent(currentSelectedAp)}`;
+            }
+        }
+
+        // 4. Tải thống kê cán bộ làm theo ngày
+        async function loadUserDateStats() {
+            const tbody = document.getElementById("statByUserDateTable");
+            try {
+                const res = await fetch("/api/tienich/stats-by-user-date");
+                const result = await res.json();
+
+                if (result.success && result.data && result.data.length > 0) {
+                    tbody.innerHTML = result.data.map((item, index) => `
+                        <tr>
+                            <td class="text-center fw-bold text-muted">${index + 1}</td>
+                            <td class="fw-bold text-dark"><i class="fa-solid fa-user me-2 text-secondary"></i>${escapeHtml(item.nguoi_lam)}</td>
+                            <td class="text-center"><span class="badge bg-light text-dark border">${escapeHtml(item.ngay_lam || 'N/A')}</span></td>
+                            <td class="text-center"><span class="badge bg-success fs-6">${parseInt(item.so_luong || 0).toLocaleString('vi-VN')} lượt</span></td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Chưa có dữ liệu nhập theo ngày.</td></tr>';
+                }
+            } catch (err) {
+                console.error("Lỗi khi tải thống kê cán bộ:", err);
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">Lỗi kết nối máy chủ!</td></tr>';
+            }
+        }
+
+        // 5. Quét trùng dữ liệu
+       async function checkDuplicates() {
+    const rule = document.getElementById('duplicateRule').value;
+    const tbody = document.getElementById('duplicateTableBody');
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><i class="fa-solid fa-spinner fa-spin me-2"></i> Đang quét dữ liệu trùng...</td></tr>';
+
+    try {
+        const res = await fetch(`/api/tienich/du-lieu-trung?rule=${encodeURIComponent(rule)}`);
+        const result = await res.json();
+        
+        console.log("Kết quả trả về từ API quét trùng:", result); // Bật F12 -> Console để xem dữ liệu này
+
+        if (result.success && result.data && result.data.length > 0) {
+            document.getElementById('duplicateCount').innerText = `${result.data.length} bản ghi bị trùng`;
+            tbody.innerHTML = result.data.map(item => `
+                <tr class="table-warning" id="duplicate-row-${item.id}">
+                    <td><b>${item.stt || ''}</b></td>
+                    <td class="fw-bold">${escapeHtml(item.hoten || '')}</td>
+                    <td>${escapeHtml(item.ngaysinh || '')}</td>
+                    <td>${escapeHtml(item.diachi || '')}</td>
+                    <td>${item.dakham == 1 ? '<span class="badge bg-success">Đã khám</span>' : '<span class="badge bg-secondary">Chưa khám</span>'}</td>
+                    <td><small class="text-muted">${escapeHtml(item.checked_by_name || 'Hệ thống')}</small></td>
+                    <td class="text-center">
+                        <button class="btn btn-danger btn-sm" onclick="deleteDuplicate(${item.id})">
+                            <i class="fa-solid fa-trash"></i> Xóa
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            document.getElementById('duplicateCount').innerText = `0 trùng lặp`;
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-success py-4"><i class="fa-solid fa-circle-check me-2"></i> Không phát hiện dữ liệu trùng lặp.</td></tr>';
+        }
+    } catch (err) {
+        console.error(err);
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Lỗi kết nối máy chủ!</td></tr>';
+    }
+}
+        // 6. Xóa hồ sơ trùng
+        async function deleteDuplicate(id) {
+            if (!confirm("Bạn có chắc chắn muốn xóa bản ghi trùng này?")) return;
+            try {
+                const res = await fetch(`/api/nguoi/${id}`, { method: 'DELETE' });
+                const result = await res.json();
+                if (result.success) {
+                    const row = document.getElementById(`duplicate-row-${id}`);
+                    if (row) row.remove();
+                    
+                    const duplicateBadge = document.getElementById('duplicateCount');
+                    const currentCount = parseInt(duplicateBadge.innerText) || 0;
+                    if (currentCount > 1) {
+                        duplicateBadge.innerText = `${currentCount - 1} bản ghi bị trùng`;
+                    } else {
+                        duplicateBadge.innerText = `0 trùng lặp`;
+                    }
+
+                    loadStatsData();
+                    loadUserDateStats();
+                } else {
+                    alert(result.message || "Không thể xóa bản ghi");
+                }
+            } catch (err) {
+                alert("Lỗi kết nối máy chủ khi xóa!");
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>

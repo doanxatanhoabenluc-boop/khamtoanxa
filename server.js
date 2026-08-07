@@ -90,11 +90,15 @@ async function initDatabase() {
                 gioitinh TEXT,
                 diachi TEXT,
                 diachi_khongdau TEXT,
+                ap TEXT,
                 dakham INTEGER DEFAULT 0,
                 checked_by INTEGER,
                 checked_by_name TEXT,
                 checked_at TEXT
             );
+
+            -- Tự động bổ sung cột ap nếu bảng 'nguoi' đã được tạo từ trước
+            ALTER TABLE nguoi ADD COLUMN IF NOT EXISTS ap TEXT;
 
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -119,6 +123,7 @@ async function initDatabase() {
             CREATE INDEX IF NOT EXISTS idx_stt ON nguoi(stt);
             CREATE INDEX IF NOT EXISTS idx_hoten ON nguoi(hoten_khongdau);
             CREATE INDEX IF NOT EXISTS idx_diachi ON nguoi(diachi_khongdau);
+            CREATE INDEX IF NOT EXISTS idx_ap ON nguoi(ap);
         `);
 
         // Check & tạo admin mặc định
@@ -153,6 +158,54 @@ function removeVietnamese(str) {
         .trim();
 }
 
+// Hàm tự động lọc bóc tách tên Ấp từ chuỗi địa chỉ
+// Hàm tự động trích xuất Tên Ấp chuẩn xác từ địa chỉ
+// Hàm trích xuất tên Ấp cực kỳ chuẩn xác cho Tiếng Việt
+function extractAp(diachi) {
+    if (!diachi) return "Khác / Chưa rõ Ấp";
+    let str = String(diachi).trim();
+
+    // 1. Tìm vị trí xuất hiện của chữ "Ấp" hoặc "Ap"
+    const apMatch = str.match(/(?:ấp|ap)\s+/i);
+    if (!apMatch) return "Khác / Chưa rõ Ấp";
+
+    // Lấy phần chuỗi bắt đầu ngay sau chữ "Ấp "
+    let rawAp = str.substring(apMatch.index + apMatch[0].length).trim();
+
+    // 2. Cắt bỏ ngay lập tức nếu gặp dấu phẩy (,) hoặc các từ chỉ hành chính: xã, xa, huyện, huyen, tỉnh, tinh
+    // KHÔNG dùng \b để tránh lỗi Unicode tiếng Việt
+    const stopRegex = /\s*(?:,|\s+(?:xã|xa|huyện|huyen|tỉnh|tinh)(?:\s+|$))/i;
+    const stopMatch = rawAp.match(stopRegex);
+    
+    if (stopMatch) {
+        rawAp = rawAp.substring(0, stopMatch.index).trim();
+    }
+
+    if (!rawAp) return "Khác / Chưa rõ Ấp";
+
+    // 3. Chuẩn hóa hiển thị
+    // - Nếu là số: "07" -> "7"
+    if (/^\d+$/.test(rawAp)) {
+        rawAp = String(parseInt(rawAp, 10));
+    } 
+    // - Nếu là La Mã: "I" -> "1"
+    else if (rawAp.toUpperCase() === 'I') {
+        rawAp = '1';
+    } 
+    // - Viết hoa chữ cái đầu từng từ (ví dụ: "tân bửu" -> "Tân Bửu")
+    else {
+        rawAp = rawAp
+            .toLowerCase()
+            .split(/\s+/)
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+
+        // Chuẩn hóa dạng 6a -> 6A, 7a -> 7A
+        rawAp = rawAp.replace(/(\d+)\s*([a-z])/gi, (m, p1, p2) => p1 + p2.toUpperCase());
+    }
+
+    return `Ấp ${rawAp}`;
+}
 function excelDate(value) {
     if (!value) return "";
     if (typeof value === "number") {
@@ -383,6 +436,9 @@ app.delete("/api/users/:id", requireAdmin, async (req, res) => {
 //===============================
 // API IMPORT EXCEL (CHỈ ADMIN)
 //===============================
+//===============================
+// API IMPORT EXCEL (CHỈ ADMIN)
+//===============================
 app.post("/api/import", requireAdmin, upload.single("excel"), async (req, res) => {
     const client = await pool.connect();
     try {
@@ -405,22 +461,33 @@ app.post("/api/import", requireAdmin, upload.single("excel"), async (req, res) =
 
         for (let i = 0; i < rows.length; i++) {
             const r = rows[i];
-            const stt = Number(r["STT"] || 0);
-            const hoten = String(r["Họ và tên"] || r["HỌ VÀ TÊN"] || "").trim();
-            const ngaysinh = excelDate(r["Ngày sinh"]);
-            const gioitinh = String(r["Giới tính"] || "").trim();
-            const diachi = String(r["Nơi thường trú"] || r["Địa chỉ"] || "").trim();
+            const stt = Number(r["STT"] || r["stt"] || 0);
+            const hoten = String(r["Họ và tên"] || r["HỌ VÀ TÊN"] || r["hoten"] || "").trim();
+            const ngaysinh = String(r["Ngày sinh"] || r["ngaysinh"] || "").trim();
+            const gioitinh = String(r["Giới tính"] || r["gioitinh"] || "").trim();
+            const diachi = String(r["Nơi thường trú"] || r["Địa chỉ"] || r["diachi"] || "").trim();
 
+            // TỰ ĐỘNG BÓC TÁCH TÊN ẤP
+            const ap = extractAp(diachi);
+
+            // XỬ LÝ TRẠNG THÁI ĐÃ KHÁM / CHƯA KHÁM
             let dakham = 0;
             const trangthai = String(
-                r["Trạng thái"] || r["Kết quả"] || r["__EMPTY"] || ""
+                r["Trạng thái"] || r["Kết quả"] || r["dakham"] || r["__EMPTY"] || ""
             ).toLowerCase();
 
-            if (trangthai.includes("đã") || trangthai.includes("da") || trangthai === "1") {
+            if (trangthai.includes("đã") || trangthai.includes("da") || trangthai === "1" || trangthai === "true") {
                 dakham = 1;
             }
 
-            valueStrings.push(`($${paramIndex}, $${paramIndex+1}, $${paramIndex+2}, $${paramIndex+3}, $${paramIndex+4}, $${paramIndex+5}, $${paramIndex+6}, $${paramIndex+7})`);
+            // LẤY NGƯỜI ĐÁNH DẤU VÀ THỜI GIAN (NẾU CÓ TRONG FILE EXPORT)
+            const checked_by_name = String(r["Người đánh dấu"] || "").trim();
+            const checked_at = String(r["Thời gian đánh dấu"] || "").trim();
+
+            valueStrings.push(
+                `($${paramIndex}, $${paramIndex+1}, $${paramIndex+2}, $${paramIndex+3}, $${paramIndex+4}, $${paramIndex+5}, $${paramIndex+6}, $${paramIndex+7}, $${paramIndex+8}, $${paramIndex+9}, $${paramIndex+10})`
+            );
+
             batchValues.push(
                 stt,
                 hoten,
@@ -429,13 +496,20 @@ app.post("/api/import", requireAdmin, upload.single("excel"), async (req, res) =
                 gioitinh,
                 diachi,
                 removeVietnamese(diachi),
-                dakham
+                ap,
+                dakham,
+                checked_by_name || null,
+                checked_at || null
             );
-            paramIndex += 8;
+            paramIndex += 11;
 
             if (valueStrings.length === BATCH_SIZE || i === rows.length - 1) {
                 const queryText = `
-                    INSERT INTO nguoi (stt, hoten, hoten_khongdau, ngaysinh, gioitinh, diachi, diachi_khongdau, dakham)
+                    INSERT INTO nguoi (
+                        stt, hoten, hoten_khongdau, ngaysinh, gioitinh, 
+                        diachi, diachi_khongdau, ap, dakham, 
+                        checked_by_name, checked_at
+                    )
                     VALUES ${valueStrings.join(", ")}
                 `;
                 await client.query(queryText, batchValues);
@@ -459,7 +533,7 @@ app.post("/api/import", requireAdmin, upload.single("excel"), async (req, res) =
         if (req.file && fs.existsSync(req.file.path)) {
             fs.unlinkSync(req.file.path);
         }
-        console.error(err);
+        console.error("Lỗi Import:", err);
         res.status(500).json({ ok: false, message: err.message });
     } finally {
         client.release();
@@ -638,10 +712,22 @@ app.put("/api/nguoi/:id", requireLogin, async (req, res) => {
     const { stt, hoten, hoten_khongdau, ngaysinh, gioitinh, diachi, diachi_khongdau, dakham } = req.body;
     try {
         const isKham = (dakham === 1 || dakham === "1" || dakham === true) ? 1 : 0;
+        
+        // 💡 Tự động phân tích tên Ấp mới từ địa chỉ vừa chỉnh sửa
+        const apCalculated = extractAp(diachi);
+
         await pool.query(
             `UPDATE nguoi 
-             SET stt=$1, hoten=$2, hoten_khongdau=$3, ngaysinh=$4, gioitinh=$5, diachi=$6, diachi_khongdau=$7, dakham=$8 
-             WHERE id=$9`,
+             SET stt=$1, 
+                 hoten=$2, 
+                 hoten_khongdau=$3, 
+                 ngaysinh=$4, 
+                 gioitinh=$5, 
+                 diachi=$6, 
+                 diachi_khongdau=$7, 
+                 dakham=$8,
+                 ap=$9 -- 💡 Thêm cập nhật cột ap ở đây
+             WHERE id=$10`,
             [
                 stt, 
                 hoten, 
@@ -651,6 +737,7 @@ app.put("/api/nguoi/:id", requireLogin, async (req, res) => {
                 diachi, 
                 diachi_khongdau || removeVietnamese(diachi), 
                 isKham, 
+                apCalculated, // 💡 Giá trị ap mới (ví dụ: 'Ấp 6A' hoặc 'Ấp Tân Phú')
                 id
             ]
         );
@@ -698,55 +785,23 @@ app.get("/api/stats", requireLogin, async (req, res) => {
 app.get("/api/stats-by-ap", requireLogin, async (req, res) => {
     try {
         const result = await pool.query(`
-            WITH ap_extracted AS (
-                SELECT 
-                    id,
-                    dakham,
-                    CASE 
-                        WHEN UPPER(diachi) LIKE '%ẤP 6A%' OR UPPER(diachi) LIKE '%AP 6A%' THEN 'Ấp 6A'
-                        WHEN UPPER(diachi) LIKE '%ẤP 6B%' OR UPPER(diachi) LIKE '%AP 6B%' THEN 'Ấp 6B'
-                        WHEN UPPER(diachi) LIKE '%ẤP 7A%' OR UPPER(diachi) LIKE '%AP 7A%' THEN 'Ấp 7A'
-                        WHEN UPPER(diachi) LIKE '%ẤP 10%' OR UPPER(diachi) LIKE '%AP 10%' THEN 'Ấp 10'
-                        WHEN UPPER(diachi) LIKE '%ẤP 1%' OR UPPER(diachi) LIKE '%AP 1%' THEN 'Ấp 1'
-                        WHEN UPPER(diachi) LIKE '%ẤP 2%' OR UPPER(diachi) LIKE '%AP 2%' THEN 'Ấp 2'
-                        WHEN UPPER(diachi) LIKE '%ẤP 3%' OR UPPER(diachi) LIKE '%AP 3%' THEN 'Ấp 3'
-                        WHEN UPPER(diachi) LIKE '%ẤP 4%' OR UPPER(diachi) LIKE '%AP 4%' THEN 'Ấp 4'
-                        WHEN UPPER(diachi) LIKE '%ẤP 5%' OR UPPER(diachi) LIKE '%AP 5%' THEN 'Ấp 5'
-                        WHEN UPPER(diachi) LIKE '%ẤP 6%' OR UPPER(diachi) LIKE '%AP 6%' THEN 'Ấp 6'
-                        WHEN UPPER(diachi) LIKE '%ẤP 7%' OR UPPER(diachi) LIKE '%AP 7%' THEN 'Ấp 7'
-                        WHEN UPPER(diachi) LIKE '%ẤP 8%' OR UPPER(diachi) LIKE '%AP 8%' THEN 'Ấp 8'
-                        WHEN UPPER(diachi) LIKE '%ẤP 9%' OR UPPER(diachi) LIKE '%AP 9%' THEN 'Ấp 9'
-                        ELSE 'Khác / Chưa rõ Ấp'
-                    END AS ten_ap
-                FROM nguoi
-            )
             SELECT 
-                ten_ap AS ap, 
+                COALESCE(ap, 'Khác / Chưa rõ Ấp') AS ap, 
                 COUNT(*) AS tong_so,
                 COUNT(CASE WHEN dakham = 1 THEN 1 END) AS dakham_count,
                 COUNT(CASE WHEN dakham = 0 OR dakham IS NULL THEN 1 END) AS chuakham_count
-            FROM ap_extracted
-            GROUP BY ten_ap
+            FROM nguoi
+            GROUP BY ap
+            -- ĐIỀU KIỆN TỰ ĐỘNG XÓA/ẨN: Chỉ lấy những Ấp có tổng số người lớn hơn 0
+            HAVING COUNT(*) > 0
             ORDER BY 
-                CASE ten_ap
-                    WHEN 'Ấp 1' THEN 1
-                    WHEN 'Ấp 2' THEN 2
-                    WHEN 'Ấp 3' THEN 3
-                    WHEN 'Ấp 4' THEN 4
-                    WHEN 'Ấp 5' THEN 5
-                    WHEN 'Ấp 6' THEN 6
-                    WHEN 'Ấp 6A' THEN 7
-                    WHEN 'Ấp 6B' THEN 8
-                    WHEN 'Ấp 7' THEN 9
-                    WHEN 'Ấp 7A' THEN 10
-                    WHEN 'Ấp 8' THEN 11
-                    WHEN 'Ấp 9' THEN 12
-                    WHEN 'Ấp 10' THEN 13
-                    ELSE 99
-                END ASC
+                CASE WHEN ap = 'Khác / Chưa rõ Ấp' OR ap IS NULL THEN 2 ELSE 1 END,
+                NULLIF(SUBSTRING(ap FROM 'Ấp ([0-9]+)'), '')::INTEGER ASC NULLS LAST,
+                ap ASC
         `);
         res.json({ ok: true, data: result.rows });
     } catch (err) {
+        console.error("Lỗi API Thống kê theo Ấp:", err);
         res.status(500).json({ ok: false, message: err.message });
     }
 });
@@ -903,6 +958,96 @@ app.get("/api/export-chua-kham", requireAdminOrLanhDao, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ ok: false, message: err.message });
+    }
+});
+//===============================
+// API TIỆN ÍCH - KIỂM TRA DỮ LIỆU TRÙNG LẶP
+//===============================
+app.get("/api/tienich/du-lieu-trung", requireLogin, async (req, res) => {
+    try {
+        const rule = req.query.rule || "name_dob";
+        let sql = "";
+
+        if (rule === "stt") {
+            sql = `
+                SELECT * FROM nguoi 
+                WHERE stt IN (
+                    SELECT stt FROM nguoi 
+                    WHERE stt IS NOT NULL AND stt > 0 
+                    GROUP BY stt HAVING COUNT(*) > 1
+                )
+                ORDER BY stt ASC, id ASC;
+            `;
+        } else if (rule === "name_address") {
+            sql = `
+                WITH clean_data AS (
+                    SELECT id,
+                           LOWER(TRIM(COALESCE(NULLIF(hoten_khongdau, ''), hoten))) AS name_key,
+                           LOWER(TRIM(COALESCE(NULLIF(diachi_khongdau, ''), diachi))) AS addr_key
+                    FROM nguoi
+                ),
+                duplicates AS (
+                    SELECT name_key, addr_key FROM clean_data
+                    WHERE name_key IS NOT NULL AND name_key != '' 
+                      AND addr_key IS NOT NULL AND addr_key != ''
+                    GROUP BY name_key, addr_key HAVING COUNT(*) > 1
+                )
+                SELECT n.* FROM nguoi n
+                JOIN clean_data c ON n.id = c.id
+                JOIN duplicates d ON c.name_key = d.name_key AND c.addr_key = d.addr_key
+                ORDER BY c.name_key ASC, n.id ASC;
+            `;
+        } else {
+            sql = `
+                WITH clean_data AS (
+                    SELECT id,
+                           LOWER(TRIM(COALESCE(NULLIF(hoten_khongdau, ''), hoten))) AS name_key,
+                           LOWER(TRIM(COALESCE(ngaysinh, ''))) AS dob_key
+                    FROM nguoi
+                ),
+                duplicates AS (
+                    SELECT name_key, dob_key FROM clean_data
+                    WHERE name_key IS NOT NULL AND name_key != '' 
+                      AND dob_key IS NOT NULL AND dob_key != ''
+                    GROUP BY name_key, dob_key HAVING COUNT(*) > 1
+                )
+                SELECT n.* FROM nguoi n
+                JOIN clean_data c ON n.id = c.id
+                JOIN duplicates d ON c.name_key = d.name_key AND c.dob_key = d.dob_key
+                ORDER BY c.name_key ASC, n.id ASC;
+            `;
+        }
+
+        const result = await pool.query(sql);
+        const rows = result.rows || result; // Tương thích cả PostgreSQL và MySQL
+
+        res.json({ success: true, data: rows });
+    } catch (err) {
+        console.error("Lỗi quét trùng:", err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+//===============================
+// API TIỆN ÍCH - THỐNG KÊ THEO NGƯỜI LÀM VÀ NGÀY LÀM
+//===============================
+app.get("/api/tienich/stats-by-user-date", requireLogin, async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                COALESCE(checked_by_name, 'Chưa xác định') AS nguoi_lam,
+                TO_CHAR(checked_at::timestamp, 'DD/MM/YYYY') AS ngay_lam,
+                COUNT(*) AS so_luong
+            FROM nguoi
+            WHERE dakham = 1 AND checked_at IS NOT NULL
+            GROUP BY checked_by_name, TO_CHAR(checked_at::timestamp, 'DD/MM/YYYY')
+            ORDER BY ngay_lam DESC, so_luong DESC
+        `);
+
+        res.json({ success: true, data: result.rows });
+    } catch (err) {
+        console.error("Lỗi thống kê người/ngày:", err);
+        res.status(500).json({ success: false, message: err.message });
     }
 });
 
